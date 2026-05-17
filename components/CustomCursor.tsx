@@ -109,30 +109,14 @@ export default function CustomCursor() {
         className="custom-cursor-arrow"
         aria-hidden="true"
       >
-        <svg
-          width="40"
-          height="42"
-          viewBox="0 0 40 42"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
+        <svg version="1.2" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 158 162" width="40" height="42" style={{ transform: 'scaleX(-1)' }}>
           <defs>
-            <linearGradient
-              id="cur-g"
-              x1="2"  y1="38"
-              x2="30" y2="2"
-              gradientUnits="userSpaceOnUse"
-            >
-              <stop offset="0%"   stopColor="#2ec4b6" />
-              <stop offset="55%"  stopColor="#9ddc3e" />
-              <stop offset="100%" stopColor="#e8f53a" />
-            </linearGradient>
+            <radialGradient id="g1" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="matrix(-109.367,135.248,-135.248,-109.367,156.614,5.704)">
+              <stop offset=".004" stopColor="#e9e22e"/>
+              <stop offset="1" stopColor="#3acae4"/>
+            </radialGradient>
           </defs>
-          {/* Classic pointer cursor silhouette */}
-          <path
-            d="M2 2 L2 34 L12 26 L18 38 L22 36 L16 24 L30 24 Z"
-            fill="url(#cur-g)"
-          />
+          <path fill="url(#g1)" d="m154.89 16.47l-47.69 138.69c-2.73 7.94-14.09 7.58-16.3-0.52l-17.17-62.74c-0.87-3.17-3.47-5.56-6.7-6.15l-57.76-10.55c-8.46-1.55-9.58-13.22-1.57-16.35l136.01-53.11c6.77-2.64 13.54 3.85 11.18 10.73z"/>
         </svg>
       </div>
 
@@ -185,3 +169,28 @@ export default function CustomCursor() {
  * }
  * ══════════════════════════════════════════════════════════════════════
  */
+        // <svg
+        //   width="40"
+        //   height="42"
+        //   viewBox="0 0 40 42"
+        //   fill="none"
+        //   xmlns="http://www.w3.org/2000/svg"
+        // >
+        //   <defs>
+        //     <linearGradient
+        //       id="cur-g"
+        //       x1="2"  y1="38"
+        //       x2="30" y2="2"
+        //       gradientUnits="userSpaceOnUse"
+        //     >
+        //       <stop offset="0%"   stopColor="#2ec4b6" />
+        //       <stop offset="55%"  stopColor="#9ddc3e" />
+        //       <stop offset="100%" stopColor="#e8f53a" />
+        //     </linearGradient>
+        //   </defs>
+        //   {/* Classic pointer cursor silhouette */}
+        //   <path
+        //     d="M2 2 L2 34 L12 26 L18 38 L22 36 L16 24 L30 24 Z"
+        //     fill="url(#cur-g)"
+        //   />
+        // </svg>

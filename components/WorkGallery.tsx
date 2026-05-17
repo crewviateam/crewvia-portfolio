@@ -116,7 +116,8 @@ export default function WorkGallery() {
             scrollTrigger: {
               trigger: card,
               start: "top 90%",
-              toggleActions: "play none none none",
+              end: "top 10%",
+              toggleActions: "play reverse play reverse",
             },
           }
         );

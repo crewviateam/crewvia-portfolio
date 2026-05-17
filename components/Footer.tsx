@@ -19,7 +19,7 @@ function LetsBuildLink() {
   return (
     <a
       ref={ref}
-      href="mailto:hello@crewvia.com"
+      href="mailto:hello@crewvia.in"
       className="text-[8vw] md:text-[10vw] font-bold leading-none transition-all duration-300 relative"
       style={{ WebkitTextStroke: "1.5px rgba(46,196,182,0.3)", color: "transparent" }}
       onMouseEnter={() => {
@@ -42,13 +42,13 @@ const SITEMAP  = ["Work", "Services", "About", "Careers"] as const;
 const CONNECT  = [
   { label: "LinkedIn", href: "https://www.linkedin.com/company/crewvia", external: true },
   { label: "Instagram", href: "https://instagram.com/crewvia", external: true },
-  { label: "Email", href: "mailto:hello@crewvia.com", external: false },
-  { label: "Website", href: "https://crewvia.com", external: true },
+  { label: "Email", href: "mailto:hello@crewvia.in", external: false },
+  { label: "Website", href: "https://crewvia.in", external: true },
 ] as const;
 
 export default function Footer() {
   return (
-    <footer className="bg-[#0a0a0a] text-white relative overflow-hidden">
+    <footer className="bg-[#0a0a0a] px-20 text-white relative overflow-hidden">
       <div className="section-padding container relative z-10">
 
         {/* CTA */}
@@ -126,10 +126,10 @@ export default function Footer() {
       {/* Giant background text */}
       <div className="absolute bottom-0 left-0 w-full overflow-hidden pointer-events-none" style={{ opacity: 0.05 }}>
         <h1
-          className="text-[12vw] leading-[0.7] font-black text-center translate-y-[20%]"
+          className="text-[18vw] leading-[0.7] font-black text-center translate-y-[20%]"
           style={{ color: "#2ec4b6" }}
         >
-          CREWVIA
+          CREW
         </h1>
       </div>
     </footer>

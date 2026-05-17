@@ -21,6 +21,8 @@ export default function Intro() {
             scrollTrigger: {
               trigger: line,
               start: "top 80%",
+              end: "top 20%",
+              toggleActions: "play reverse play reverse",
             }
           }
         );
