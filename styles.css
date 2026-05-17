@@ -1,7 +1,14 @@
+/* ─── Tailwind CSS v3 — Tree-shaken, bundled by Vite/PostCSS ─────────────── */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   --bg-color: #050505;
-  --text-color: #e1e1e1;
-  --accent-color: #333;
+  --text-color: #f4f4f4;
+  --accent-color: #2ec4b6;
+  --accent-lime: #d4e157;
+  --accent-gradient: linear-gradient(135deg, #2ec4b6, #45b7aa, #7ec88a, #c5d94a, #d4e157);
   --font-heading: 'Syne', sans-serif;
   --font-body: 'Manrope', sans-serif;
   --font-serif: 'Playfair Display', serif;
@@ -17,6 +24,7 @@
 html {
   width: 100vw;
   overflow-x: hidden;
+  background-color: var(--bg-color);
 }
 
 html.lenis, html.lenis body {
@@ -91,7 +99,12 @@ ul {
 
 /* Typography Effects */
 .stroke-text {
-  -webkit-text-stroke: 1px rgba(255,255,255,0.3);
+  -webkit-text-stroke: 1.5px rgba(46, 196, 182, 0.4);
+  color: transparent;
+}
+
+.stroke-text-lime {
+  -webkit-text-stroke: 1.5px rgba(212, 225, 87, 0.4);
   color: transparent;
 }
 
@@ -106,26 +119,66 @@ ul {
   position: fixed;
   top: 0;
   left: 0;
-  width: 15px;
-  height: 15px;
-  background-color: white;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   pointer-events: none;
   z-index: 10000;
-  mix-blend-mode: exclusion;
-  transition: width 0.3s cubic-bezier(0.19, 1, 0.22, 1), height 0.3s cubic-bezier(0.19, 1, 0.22, 1);
-  /* GSAP handles transform, but we set initial state just in case */
   transform: translate(-50%, -50%);
+  background: var(--accent-gradient);
+  mix-blend-mode: normal;
+  transition: width 0.3s cubic-bezier(0.19, 1, 0.22, 1), height 0.3s cubic-bezier(0.19, 1, 0.22, 1), opacity 0.2s;
+  box-shadow: 0 0 15px rgba(46, 196, 182, 0.3);
 }
 
 .custom-cursor.hovered {
-  width: 80px;
-  height: 80px;
-  background-color: white;
-  mix-blend-mode: exclusion;
+  width: 60px;
+  height: 60px;
+  opacity: 0.25;
+  background: var(--accent-gradient);
 }
 
+/* Brand gradient text */
+.gradient-text {
+  background: var(--accent-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Scrollbar */
 ::-webkit-scrollbar {
   width: 0px;
   background: transparent;
+}
+
+/* Selection */
+::selection {
+  background: rgba(46, 196, 182, 0.3);
+  color: #fff;
+}
+
+@media (pointer: fine) {
+  html, html * { cursor: none !important; }
+}
+
+.custom-cursor-arrow {
+  position: fixed;
+  top: 0; left: 0;
+  width: 40px; height: 42px;
+  pointer-events: none;
+  z-index: 999999;
+  will-change: transform;
+  filter: drop-shadow(0 2px 6px rgba(46, 196, 182, 0.35));
+}
+
+.custom-cursor-ring {
+  position: fixed;
+  top: 0; left: 0;
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(46, 196, 182, 0.5);
+  pointer-events: none;
+  z-index: 999998;
+  will-change: transform;
 }

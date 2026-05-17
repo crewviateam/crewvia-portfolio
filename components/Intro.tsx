@@ -1,8 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { gsap } from 'gsap';
-import { ScrollTrigger } from 'gsap/ScrollTrigger';
-
-gsap.registerPlugin(ScrollTrigger);
+import { gsap, ScrollTrigger } from '../lib/gsap';
 
 export default function Intro() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -35,38 +32,39 @@ export default function Intro() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-32 md:py-56 bg-[#0a0a0a] text-[#f4f4f4] overflow-hidden px-4">
+    <section ref={sectionRef} className="py-32 md:py-56 bg-[#050505] text-white overflow-hidden px-4">
       <div className="container mx-auto">
         
         <div className="flex flex-col text-[7vw] md:text-[6vw] leading-[1.1] font-heading uppercase font-bold tracking-tight">
           
           <div className="intro-line-wrap overflow-hidden flex flex-wrap items-baseline gap-4">
              <span className="char">We</span>
-             <span className="char font-serif italic font-light text-gray-400 lowercase">don't just</span>
-             <span className="char">build</span>
+             <span className="char font-serif italic font-light text-white/30 lowercase">don't just</span>
+             <span className="char">craft</span>
           </div>
-
+ 
           <div className="intro-line-wrap overflow-hidden flex flex-wrap items-baseline gap-4 pl-[5vw]">
-             <span className="char stroke-text text-transparent">Digital</span>
-             <span className="char">Experiences.</span>
+             <span className="char stroke-text">Creative</span>
+             <span className="char" style={{ color: '#d4e157' }}>Campaigns.</span>
           </div>
-
+ 
           <div className="intro-line-wrap overflow-hidden flex flex-wrap items-baseline gap-4">
              <span className="char">We</span>
-             <span className="char font-serif italic font-light text-white lowercase">engineer</span>
-             <span className="char">Cults.</span>
+             <span className="char font-serif italic font-light text-white lowercase">build</span>
+             <span className="char" style={{ color: '#2ec4b6' }}>Legacies.</span>
           </div>
-
+ 
         </div>
-
+ 
         <div className="mt-32 w-full flex justify-end">
-          <div className="w-full md:w-1/3 text-lg md:text-xl font-light text-gray-400 font-mono leading-relaxed border-l border-gray-800 pl-8">
+          <div className="w-full md:w-1/3 text-lg md:text-xl font-light text-white/60 font-mono leading-relaxed pl-8"
+            style={{ borderLeft: '2px solid #2ec4b6' }}>
             <p>
-              In the age of templates, <span className="text-white italic font-serif">chaos is currency</span>. We strip away the non-essential to reveal the raw, beating heart of your brand.
+              In the age of templates, <span className="text-white italic font-serif">creative freedom is currency</span>. We strip away the non-essential to reveal the raw, beating heart of your brand — and unite a crew to bring it to life.
             </p>
           </div>
         </div>
-
+ 
       </div>
     </section>
   );

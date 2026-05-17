@@ -3,62 +3,88 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Abhay Mallick - Portfolio</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&family=Syne:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,400;0,600;1,400;1,600&display=swap" rel="stylesheet">
-    
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="/styles.css" />
 
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Manrope', 'sans-serif'],
-              heading: ['Syne', 'sans-serif'],
-              serif: ['Playfair Display', 'serif'],
-            },
-            colors: {
-              'bg-color': '#f4f4f4',
-              'dark': '#111111',
-            },
-            transitionTimingFunction: {
-              'expo': 'cubic-bezier(0.19, 1, 0.22, 1)',
-            }
-          }
-        }
-      }
-    </script>
+    <!-- ─── Primary SEO ────────────────────────────────────────────────────── -->
+    <title>CREWVIA — Creative Freedom, United Crew</title>
+    <meta name="description" content="CREWVIA is a creative agency delivering brand identity, art direction, immersive web, film production, and marketing campaigns. Creative Freedom, United Crew." />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://crewvia.com/" />
 
+    <!-- ─── OpenGraph ──────────────────────────────────────────────────────── -->
+    <meta property="og:title"       content="CREWVIA — Creative Freedom, United Crew" />
+    <meta property="og:description" content="CREWVIA is a creative agency delivering brand identity, art direction, immersive web, film production, and marketing campaigns." />
+    <meta property="og:type"        content="website" />
+    <meta property="og:url"         content="https://crewvia.com/" />
+    <meta property="og:image"       content="https://crewvia.com/image/LOGO%20PNG.png" />
+
+    <!-- ─── Twitter Card ──────────────────────────────────────────────────── -->
+    <meta name="twitter:card"        content="summary_large_image" />
+    <meta name="twitter:title"       content="CREWVIA — Creative Freedom, United Crew" />
+    <meta name="twitter:description" content="CREWVIA is a creative agency delivering brand identity, art direction, immersive web, film production, and marketing campaigns." />
+    <meta name="twitter:image"       content="https://crewvia.com/image/LOGO%20PNG.png" />
+
+    <!-- ─── Favicon ───────────────────────────────────────────────────────── -->
+    <link rel="icon" type="image/png" href="/image/LOGO PNG.png" />
+
+    <!-- ─── Google Fonts: DNS Prefetch + Preconnect ───────────────────────── -->
+    <link rel="dns-prefetch"  href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch"  href="https://fonts.gstatic.com" />
+    <link rel="preconnect"    href="https://fonts.googleapis.com" />
+    <link rel="preconnect"    href="https://fonts.gstatic.com" crossorigin />
+
+    <!--
+      Font loading strategy:
+      - display=swap prevents invisible text during font load (good FCP)
+      - Subset to only weights actually used in the project
+    -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&family=Syne:wght@700;800&family=Playfair+Display:ital,wght@0,400;1,400&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- ─── Critical Resource Preloads (LCP optimization) ────────────────── -->
+    <!-- Hero background: highest priority — directly determines LCP score (WebP: 11KB vs 274KB JPG) -->
+    <link rel="preload" as="image" href="/image/hero_bg.webp" fetchpriority="high" type="image/webp" />
+    <!-- Logo: above the fold (WebP: 12KB vs 804KB PNG) -->
+    <link rel="preload" as="image" href="/image/logo.webp" type="image/webp" />
+
+    <!-- ─── Bundled CSS (Tailwind tree-shaken via PostCSS + Vite) ─────────── -->
+    <!--
+      NOTE: In dev, Vite injects styles via JS.
+      In production build, Vite extracts a standalone CSS file.
+      The /styles.css import is handled by the entry module below.
+    -->
+
+    <!-- ─── FOUC Prevention (inline — runs before any JS) ────────────────── -->
     <style>
-      body {
-        background-color: #f4f4f4;
-        color: #111;
-        opacity: 0; /* FOUC prevention */
-        animation: fadeIn 0.5s ease-out forwards;
+      /* Set bg immediately to prevent white flash before CSS loads */
+      :root { color-scheme: dark; }
+      html, body {
+        background-color: #050505;
+        color: #f4f4f4;
+        margin: 0;
       }
-      @keyframes fadeIn {
+      /* Smooth fade-in once React mounts */
+      #root {
+        opacity: 0;
+        animation: fouc-fade 0.4s ease-out 0.1s forwards;
+      }
+      @keyframes fouc-fade {
         to { opacity: 1; }
       }
     </style>
-  <script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "gsap/": "https://esm.sh/gsap@^3.14.2/",
-    "gsap": "https://esm.sh/gsap@^3.14.2",
-    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "@studio-freight/lenis": "https://esm.sh/@studio-freight/lenis@^1.0.42"
-  }
-}
-</script>
-</head>
+
+    <!--
+      ─── REMOVED: CDN Tailwind script ────────────────────────────────────────
+      Previously: <script src="https://cdn.tailwindcss.com"></script>
+      This was ~350KB blocking script with zero tree-shaking.
+      Now handled by tailwindcss + postcss + vite (produces ~5-15KB in production).
+
+      ─── REMOVED: esm.sh import map ─────────────────────────────────────────
+      Previously, packages were resolved at runtime from esm.sh CDN.
+      Now all modules are bundled by Vite at build time — zero runtime resolution.
+    -->
+  </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
