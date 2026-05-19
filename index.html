@@ -3,90 +3,88 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#050505" />
 
     <!-- ─── Primary SEO ────────────────────────────────────────────────────── -->
     <title>CREWVIA — Creative Freedom, United Crew</title>
     <meta name="description" content="CREWVIA is a creative agency delivering brand identity, art direction, immersive web, film production, and marketing campaigns. Creative Freedom, United Crew." />
+    <meta name="keywords" content="creative agency, brand identity, web design, film production, marketing, CREWVIA" />
+    <meta name="author" content="CREWVIA" />
     <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://crewvia.com/" />
+    <link rel="canonical" href="https://crewvia.in/" />
 
     <!-- ─── OpenGraph ──────────────────────────────────────────────────────── -->
-    <meta property="og:title"       content="CREWVIA — Creative Freedom, United Crew" />
-    <meta property="og:description" content="CREWVIA is a creative agency delivering brand identity, art direction, immersive web, film production, and marketing campaigns." />
-    <meta property="og:type"        content="website" />
-    <meta property="og:url"         content="https://crewvia.com/" />
-    <meta property="og:image"       content="https://crewvia.com/image/LOGO%20PNG.png" />
+    <meta property="og:title"        content="CREWVIA — Creative Freedom, United Crew" />
+    <meta property="og:description"  content="CREWVIA is a creative agency delivering brand identity, art direction, immersive web, film production, and marketing campaigns." />
+    <meta property="og:type"         content="website" />
+    <meta property="og:url"          content="https://crewvia.in/" />
+    <meta property="og:image"        content="https://crewvia.in/image/og-cover.webp" />
+    <meta property="og:image:width"  content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:site_name"    content="CREWVIA" />
+    <meta property="og:locale"       content="en_US" />
 
     <!-- ─── Twitter Card ──────────────────────────────────────────────────── -->
     <meta name="twitter:card"        content="summary_large_image" />
+    <meta name="twitter:site"        content="@crewvia" />
     <meta name="twitter:title"       content="CREWVIA — Creative Freedom, United Crew" />
     <meta name="twitter:description" content="CREWVIA is a creative agency delivering brand identity, art direction, immersive web, film production, and marketing campaigns." />
-    <meta name="twitter:image"       content="https://crewvia.com/image/LOGO%20PNG.png" />
+    <meta name="twitter:image"       content="https://crewvia.in/image/og-cover.webp" />
 
     <!-- ─── Favicon ───────────────────────────────────────────────────────── -->
-    <link rel="icon" type="image/png" href="/image/LOGO PNG.png" />
+    <link rel="icon"             type="image/png" href="/image/logo.webp" />
+    <link rel="apple-touch-icon"                  href="/image/logo.webp" />
+
+    <!-- ─── Schema.org JSON-LD — Organization ────────────────────────────── -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "CREWVIA",
+      "url": "https://crewvia.in",
+      "logo": "https://crewvia.in/image/logo.webp",
+      "description": "CREWVIA is a creative agency delivering brand identity, art direction, immersive web, film production, and marketing campaigns.",
+      "email": "hello@crewvia.in",
+      "foundingDate": "2024",
+      "sameAs": [
+        "https://www.linkedin.com/company/crewvia",
+        "https://www.instagram.com/crewvia"
+      ],
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "IN"
+      },
+      "offers": {
+        "@type": "Offer",
+        "description": "Brand Identity, Digital Experiences, Content & Film, Marketing & Growth"
+      }
+    }
+    </script>
 
     <!-- ─── Google Fonts: DNS Prefetch + Preconnect ───────────────────────── -->
-    <link rel="dns-prefetch"  href="https://fonts.googleapis.com" />
-    <link rel="dns-prefetch"  href="https://fonts.gstatic.com" />
-    <link rel="preconnect"    href="https://fonts.googleapis.com" />
-    <link rel="preconnect"    href="https://fonts.gstatic.com" crossorigin />
-
-    <!--
-      Font loading strategy:
-      - display=swap prevents invisible text during font load (good FCP)
-      - Subset to only weights actually used in the project
-    -->
+    <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
+    <link rel="dns-prefetch" href="https://fonts.gstatic.com" />
+    <link rel="preconnect"   href="https://fonts.googleapis.com" />
+    <link rel="preconnect"   href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600&family=Syne:wght@700;800&family=Playfair+Display:ital,wght@0,400;1,400&display=swap"
       rel="stylesheet"
     />
 
     <!-- ─── Critical Resource Preloads (LCP optimization) ────────────────── -->
-    <!-- Hero background: highest priority — directly determines LCP score (WebP: 11KB vs 274KB JPG) -->
     <link rel="preload" as="image" href="/image/hero_bg.webp" fetchpriority="high" type="image/webp" />
-    <!-- Logo: above the fold (WebP: 12KB vs 804KB PNG) -->
     <link rel="preload" as="image" href="/image/logo.webp" type="image/webp" />
-
-    <!-- ─── Bundled CSS (Tailwind tree-shaken via PostCSS + Vite) ─────────── -->
-    <!--
-      NOTE: In dev, Vite injects styles via JS.
-      In production build, Vite extracts a standalone CSS file.
-      The /styles.css import is handled by the entry module below.
-    -->
 
     <!-- ─── FOUC Prevention (inline — runs before any JS) ────────────────── -->
     <style>
-      /* Set bg immediately to prevent white flash before CSS loads */
       :root { color-scheme: dark; }
-      html, body {
-        background-color: #050505;
-        color: #f4f4f4;
-        margin: 0;
-      }
-      /* Smooth fade-in once React mounts */
-      #root {
-        opacity: 0;
-        animation: fouc-fade 0.4s ease-out 0.1s forwards;
-      }
-      @keyframes fouc-fade {
-        to { opacity: 1; }
-      }
+      html, body { background-color: #050505; color: #f4f4f4; margin: 0; }
+      #root { opacity: 0; animation: fouc-fade 0.4s ease-out 0.1s forwards; }
+      @keyframes fouc-fade { to { opacity: 1; } }
     </style>
-
-    <!--
-      ─── REMOVED: CDN Tailwind script ────────────────────────────────────────
-      Previously: <script src="https://cdn.tailwindcss.com"></script>
-      This was ~350KB blocking script with zero tree-shaking.
-      Now handled by tailwindcss + postcss + vite (produces ~5-15KB in production).
-
-      ─── REMOVED: esm.sh import map ─────────────────────────────────────────
-      Previously, packages were resolved at runtime from esm.sh CDN.
-      Now all modules are bundled by Vite at build time — zero runtime resolution.
-    -->
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/index.tsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

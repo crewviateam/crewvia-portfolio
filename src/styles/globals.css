@@ -1,0 +1,174 @@
+/* ─── Tailwind CSS v3 — Tree-shaken, bundled by Vite/PostCSS ─────────────── */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ─── Design Tokens ─────────────────────────────────────────────────────── */
+:root {
+  --bg-color:        #050505;
+  --text-color:      #f4f4f4;
+  --accent-color:    #2ec4b6;
+  --accent-lime:     #d4e157;
+  --accent-gradient: linear-gradient(135deg, #2ec4b6, #45b7aa, #7ec88a, #c5d94a, #d4e157);
+  --font-heading:    'Syne', sans-serif;
+  --font-body:       'Manrope', sans-serif;
+  --font-serif:      'Playfair Display', serif;
+}
+
+/* ─── Reset ──────────────────────────────────────────────────────────────── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin:     0;
+  padding:    0;
+}
+
+/* ─── Cursor — only hide native cursor on pointer devices ───────────────── */
+/*
+ * NOTE: cursor:none is ONLY applied inside @media (pointer: fine) below.
+ * Removed the bare * { cursor: none } rule that was previously here —
+ * that broke cursor on touch-only devices that also support pointer events.
+ */
+@media (pointer: fine) {
+  html, html * {
+    cursor: none !important;
+  }
+}
+
+/* ─── Lenis Smooth Scroll ────────────────────────────────────────────────── */
+html {
+  width:      100vw;
+  overflow-x: hidden;
+  background-color: var(--bg-color);
+}
+
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+/* ─── Base Body ──────────────────────────────────────────────────────────── */
+body {
+  font-family:              var(--font-body);
+  background-color:         var(--bg-color);
+  color:                    var(--text-color);
+  -webkit-font-smoothing:   antialiased;
+  -moz-osx-font-smoothing:  grayscale;
+  overflow-x:               hidden;
+  width:                    100%;
+  position:                 relative;
+}
+
+/* ─── Typography ─────────────────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family:     var(--font-heading);
+  font-weight:     800;
+  line-height:     0.9;
+  text-transform:  uppercase;
+  letter-spacing:  -0.02em;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+ul {
+  list-style: none;
+}
+
+/* ─── Utility Classes ────────────────────────────────────────────────────── */
+.container {
+  max-width: 1800px;
+  margin:    0 auto;
+  padding:   0 4vw;
+  width:     100%;
+}
+
+.section-padding {
+  padding: 12vh 0;
+}
+
+/* ─── Typography Effects ─────────────────────────────────────────────────── */
+.stroke-text {
+  -webkit-text-stroke: 1.5px rgba(46, 196, 182, 0.4);
+  color: transparent;
+}
+
+.stroke-text-lime {
+  -webkit-text-stroke: 1.5px rgba(212, 225, 87, 0.4);
+  color: transparent;
+}
+
+.font-serif-italic {
+  font-family: var(--font-serif);
+  font-style:  italic;
+  font-weight: 400;
+}
+
+/* ─── Brand Gradient Text ────────────────────────────────────────────────── */
+.gradient-text {
+  background:               var(--accent-gradient);
+  -webkit-background-clip:  text;
+  -webkit-text-fill-color:  transparent;
+  background-clip:          text;
+}
+
+/* ─── Scrollbar — hidden ─────────────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width:      0;
+  background: transparent;
+}
+
+/* ─── Selection ──────────────────────────────────────────────────────────── */
+::selection {
+  background: rgba(46, 196, 182, 0.3);
+  color:      #fff;
+}
+
+/* ─── Custom Cursor ──────────────────────────────────────────────────────── */
+/*
+ * REMOVED:
+ *   .noise-overlay   — dead rule, element no longer in DOM
+ *   .custom-cursor   — old dot cursor, replaced by SVG arrow cursor
+ *   .custom-cursor.hovered — same
+ *
+ * will-change is intentionally NOT set here.
+ * GSAP sets/clears it dynamically per-animation via CSS.will-change,
+ * which avoids permanently promoting these elements to compositor layers
+ * when they are idle.
+ */
+
+.custom-cursor-arrow {
+  position:       fixed;
+  top:            0;
+  left:           0;
+  width:          40px;
+  height:         42px;
+  pointer-events: none;
+  z-index:        999999;
+  filter:         drop-shadow(0 2px 6px rgba(46, 196, 182, 0.35));
+}
+
+.custom-cursor-ring {
+  position:       fixed;
+  top:            0;
+  left:           0;
+  width:          48px;
+  height:         48px;
+  border-radius:  50%;
+  border:         1.5px solid rgba(46, 196, 182, 0.5);
+  pointer-events: none;
+  z-index:        999998;
+}

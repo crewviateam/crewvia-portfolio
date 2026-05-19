@@ -22,10 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# CMS — generated at build time from Supabase (fallback data is in src/data/fallback/)
-src/data/generated/
-
-# Environment secrets — never commit
-.env.local
-.env.production
