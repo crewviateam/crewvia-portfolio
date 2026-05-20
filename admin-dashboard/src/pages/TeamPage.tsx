@@ -14,7 +14,7 @@ const BLANK: Partial<TeamMember> = {
 };
 
 export default function TeamPage() {
-  const { rows, loading, saving, deploying, error, save, remove } = useCrudTable<TeamMember>("team_members");
+  const { rows, loading, saving, error, save, remove } = useCrudTable<TeamMember>("team_members");
   const [editing,  setEditing]  = useState<Partial<TeamMember> | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
@@ -36,13 +36,13 @@ export default function TeamPage() {
           <div className="page-sub">{rows.length} members</div>
         </div>
         <div className="flex items-center gap-12">
-          {deploying && <span style={{ fontSize: "12px", color: "var(--teal)" }}>🚀 Deploying…</span>}
+
           <button className="btn btn-primary" onClick={() => setEditing({ ...BLANK })}>+ Add Member</button>
         </div>
       </div>
 
       <div className="admin-content">
-        {error && <div style={{ color: "var(--red)", marginBottom: "12px" }}>⚠ {error}</div>}
+        {error && <div style={{ color: "var(--brand-yellow)", marginBottom: "12px" }}>⚠ {error}</div>}
         {loading ? (
           <div className="flex items-center gap-12" style={{ color: "var(--text-dim)", padding: "40px 0" }}><div className="spinner" /> Loading…</div>
         ) : (

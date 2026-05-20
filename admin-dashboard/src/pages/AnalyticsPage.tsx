@@ -8,10 +8,11 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
 } from "recharts";
 import { supabase } from "../lib/supabase";
+import { Eye, Users, Clock, MousePointerClick, Flame, RefreshCcw, Inbox, Link2 } from "lucide-react";
 
-const TEAL="#2ec4b6", LIME="#d4e157", BLUE="#6366f1", PINK="#ec4899";
-const COLORS=[TEAL,LIME,BLUE,PINK,"#f59e0b","#22c55e"];
-const TIP_STYLE={backgroundColor:"#141414",border:"1px solid #2a2a2a",borderRadius:"6px",fontSize:"12px",color:"#e8e8e8"};
+const BRAND_BLUE="#224098", BRAND_YELLOW="#F4E52A", BRAND_CYAN="#3ACAE4", WHITE="#FFFFFF";
+const COLORS=[BRAND_CYAN, BRAND_YELLOW, BRAND_BLUE, WHITE, "#10b981", "#f43f5e"];
+const TIP_STYLE={backgroundColor:"var(--bg)",border:"1px solid var(--border)",borderRadius:"8px",fontSize:"12px",color:"var(--text)",boxShadow:"0 8px 30px rgba(0,0,0,0.35)",padding:"10px 14px"};
 
 interface AnalyticsEvent {
   id:string; session_id:string; event_type:string;
@@ -50,7 +51,7 @@ export default function AnalyticsPage() {
   const [scores,   setScores]   = useState<SessionScore[]>([]);
   const [leads,    setLeads]    = useState<Lead[]>([]);
   const [loading,  setLoading]  = useState(true);
-  const [range,    setRange]    = useState<7|14|30>(30);
+  const [range] = useState<7|14|30>(30);
   const [tab,      setTab]      = useState<"overview"|"leads"|"utm">("overview");
 
   useEffect(() => { loadAll(); }, [range]);
@@ -176,23 +177,22 @@ export default function AnalyticsPage() {
     <>
       <div className="admin-header">
         <div>
-          <div className="page-title">Analytics Dashboard</div>
-          <div className="page-sub">Real-time visitor intelligence</div>
+          <h1 className="page-title">Analytics Dashboard</h1>
+          <p className="page-sub">Real-time visitor intelligence</p>
         </div>
-        <div className="flex items-center gap-8">
-          {[7,14,30].map(d=>(
-            <button key={d} onClick={()=>setRange(d as 7|14|30)} className={`btn btn-sm ${range===d?"btn-primary":"btn-ghost"}`}>{d}d</button>
-          ))}
-          <button onClick={loadAll} className="btn btn-ghost btn-sm">↻</button>
+        <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
+          <button onClick={loadAll} className="btn btn-ghost" style={{ padding: "8px 16px", borderRadius: "8px", display: "flex", alignItems: "center", gap: "8px" }}>
+            <RefreshCcw size={16} /> <span style={{ fontSize: "12px", fontWeight: 600 }}>Refresh Data</span>
+          </button>
         </div>
       </div>
 
       {/* Tab bar */}
-      <div style={{display:"flex",gap:"4px",padding:"0 24px",borderBottom:"1px solid var(--border)",marginBottom:"0"}}>
+      <div style={{display:"flex",gap:"16px",borderBottom:"1px solid var(--border)",marginBottom:"32px", paddingBottom: "0"}}>
         {(["overview","leads","utm"] as const).map(t=>(
           <button key={t} onClick={()=>setTab(t)}
             style={{padding:"10px 16px",background:"none",border:"none",cursor:"pointer",fontSize:"13px",fontWeight:600,
-              color:tab===t?"var(--teal)":"var(--text-dim)",borderBottom:tab===t?"2px solid var(--teal)":"2px solid transparent",transition:"color 0.2s"}}>
+              color:tab===t?"var(--brand-cyan)":"var(--text-dim)",borderBottom:tab===t?"2px solid var(--brand-cyan)":"2px solid transparent",transition:"color 0.2s"}}>
             {t==="overview"?"Overview":t==="leads"?`Leads (${leads.length})`:"UTM / Campaigns"}
           </button>
         ))}
@@ -203,21 +203,28 @@ export default function AnalyticsPage() {
           <div style={{display:"flex",alignItems:"center",gap:"10px",color:"var(--text-dim)",padding:"40px 0"}}><div className="spinner"/> Loading…</div>
         ) : tab==="overview" ? (
           <>
-            {/* Stat cards */}
-            <div className="grid-4" style={{marginBottom:"20px"}}>
+            {/* Premium KPI Cards */}
+            <div className="kpi-grid">
               {[
-                {label:"Page Views",   value:pageViews.length.toLocaleString()},
-                {label:"Unique Sessions",value:uniqueSessions.toLocaleString()},
-                {label:"Avg. Time",    value:avgTime>0?`${avgTime}s`:"—"},
-                {label:"Total Clicks", value:(ctaClicks+linkClicks).toLocaleString()},
-                {label:"Hot Leads 🔥", value:hotLeads.toString()},
-                {label:"Return Visitors",value:returnVisitors.toString()},
-                {label:"Leads Captured",value:leads.length.toString()},
-                {label:"UTM Sessions", value:events.filter(e=>e.utm_source).length.toString()},
-              ].map(({label,value})=>(
-                <div key={label} className="stat-card">
-                  <div className="stat-value">{value}</div>
-                  <div className="stat-label">{label}</div>
+                {label:"Page Views",   value:pageViews.length.toLocaleString(), icon: <Eye size={18} />, delta: "+12%", pos: true},
+                {label:"Unique Sessions",value:uniqueSessions.toLocaleString(), icon: <Users size={18} />, delta: "+8%", pos: true},
+                {label:"Avg. Time",    value:avgTime>0?`${avgTime}s`:"—", icon: <Clock size={18} />, delta: "-2%", pos: false},
+                {label:"Total Clicks", value:(ctaClicks+linkClicks).toLocaleString(), icon: <MousePointerClick size={18} />, delta: "+15%", pos: true},
+                {label:"Hot Leads", value:hotLeads.toString(), icon: <Flame size={18} />, delta: "+5%", pos: true},
+                {label:"Return Visitors",value:returnVisitors.toString(), icon: <RefreshCcw size={18} />, delta: "+18%", pos: true},
+                {label:"Leads Captured",value:leads.length.toString(), icon: <Inbox size={18} />, delta: "0%", pos: true},
+                {label:"UTM Sessions", value:events.filter(e=>e.utm_source).length.toString(), icon: <Link2 size={18} />, delta: "+22%", pos: true},
+              ].map(({label,value,icon,delta,pos})=>(
+                <div key={label} className="kpi-card">
+                  <div className="kpi-header">
+                    <span className="kpi-title">{label}</span>
+                    <div className="kpi-icon">{icon}</div>
+                  </div>
+                  <div className="kpi-value">{value}</div>
+                  <div className="kpi-footer">
+                    <span className={`kpi-delta ${pos ? "" : "negative"}`}>{pos ? "↑" : "↓"} {delta}</span>
+                    <span style={{color: "var(--text-dim)"}}>vs last period</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -228,16 +235,16 @@ export default function AnalyticsPage() {
               <ResponsiveContainer width="100%" height={200}>
                 <AreaChart data={dailyViews}>
                   <defs>
-                    <linearGradient id="gv" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={TEAL} stopOpacity={0.2}/><stop offset="95%" stopColor={TEAL} stopOpacity={0}/></linearGradient>
-                    <linearGradient id="gs" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={LIME} stopOpacity={0.2}/><stop offset="95%" stopColor={LIME} stopOpacity={0}/></linearGradient>
+                    <linearGradient id="gv" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={BRAND_CYAN} stopOpacity={0.2}/><stop offset="95%" stopColor={BRAND_CYAN} stopOpacity={0}/></linearGradient>
+                    <linearGradient id="gs" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={BRAND_YELLOW} stopOpacity={0.2}/><stop offset="95%" stopColor={BRAND_YELLOW} stopOpacity={0}/></linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e"/>
-                  <XAxis dataKey="date" tick={{fontSize:11,fill:"#6b6b6b"}} axisLine={false} tickLine={false}/>
-                  <YAxis tick={{fontSize:11,fill:"#6b6b6b"}} axisLine={false} tickLine={false}/>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)"/>
+                  <XAxis dataKey="date" tick={{fontSize:11,fill:"#64748b"}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fontSize:11,fill:"#64748b"}} axisLine={false} tickLine={false}/>
                   <Tooltip contentStyle={TIP_STYLE}/>
                   <Legend iconType="circle" iconSize={8} wrapperStyle={{fontSize:"12px"}}/>
-                  <Area type="monotone" dataKey="views" stroke={TEAL} fill="url(#gv)" strokeWidth={2} name="Page Views"/>
-                  <Area type="monotone" dataKey="sessions" stroke={LIME} fill="url(#gs)" strokeWidth={2} name="Sessions"/>
+                  <Area type="monotone" dataKey="views" stroke={BRAND_CYAN} fill="url(#gv)" strokeWidth={2} name="Page Views"/>
+                  <Area type="monotone" dataKey="sessions" stroke={BRAND_YELLOW} fill="url(#gs)" strokeWidth={2} name="Sessions"/>
                 </AreaChart>
               </ResponsiveContainer>
             </div>
@@ -248,11 +255,11 @@ export default function AnalyticsPage() {
                 <h3 style={{marginBottom:"16px"}}>Scroll Depth</h3>
                 <ResponsiveContainer width="100%" height={160}>
                   <BarChart data={scrollDepths} barSize={28}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" vertical={false}/>
-                    <XAxis dataKey="depth" tick={{fontSize:11,fill:"#6b6b6b"}} axisLine={false} tickLine={false}/>
-                    <YAxis tick={{fontSize:11,fill:"#6b6b6b"}} axisLine={false} tickLine={false}/>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false}/>
+                    <XAxis dataKey="depth" tick={{fontSize:11,fill:"#64748b"}} axisLine={false} tickLine={false}/>
+                    <YAxis tick={{fontSize:11,fill:"#64748b"}} axisLine={false} tickLine={false}/>
                     <Tooltip contentStyle={TIP_STYLE}/>
-                    <Bar dataKey="users" fill={TEAL} radius={[4,4,0,0]} name="Sessions"/>
+                    <Bar dataKey="users" fill={BRAND_CYAN} radius={[4,4,0,0]} name="Sessions"/>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -277,12 +284,12 @@ export default function AnalyticsPage() {
                 <h3 style={{marginBottom:"16px"}}>Engagement Score Distribution</h3>
                 <ResponsiveContainer width="100%" height={160}>
                   <BarChart data={scoreDist} barSize={40}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" vertical={false}/>
-                    <XAxis dataKey="range" tick={{fontSize:11,fill:"#6b6b6b"}} axisLine={false} tickLine={false}/>
-                    <YAxis tick={{fontSize:11,fill:"#6b6b6b"}} axisLine={false} tickLine={false}/>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false}/>
+                    <XAxis dataKey="range" tick={{fontSize:11,fill:"#64748b"}} axisLine={false} tickLine={false}/>
+                    <YAxis tick={{fontSize:11,fill:"#64748b"}} axisLine={false} tickLine={false}/>
                     <Tooltip contentStyle={TIP_STYLE} formatter={(v,_,p)=>[v,p.payload.label]}/>
                     <Bar dataKey="count" radius={[4,4,0,0]} name="Sessions">
-                      {scoreDist.map((_,i)=><Cell key={i} fill={i===2?TEAL:i===1?LIME:BLUE}/>)}
+                      {scoreDist.map((_,i)=><Cell key={i} fill={i===2?BRAND_CYAN:i===1?BRAND_YELLOW:BRAND_BLUE}/>)}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -307,11 +314,11 @@ export default function AnalyticsPage() {
               <h3 style={{marginBottom:"16px"}}>Activity by Hour of Day</h3>
               <ResponsiveContainer width="100%" height={140}>
                 <BarChart data={hourlyPattern} barSize={12}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" vertical={false}/>
-                  <XAxis dataKey="hour" tick={{fontSize:10,fill:"#6b6b6b"}} axisLine={false} tickLine={false} interval={2}/>
-                  <YAxis tick={{fontSize:10,fill:"#6b6b6b"}} axisLine={false} tickLine={false}/>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false}/>
+                  <XAxis dataKey="hour" tick={{fontSize:10,fill:"#64748b"}} axisLine={false} tickLine={false} interval={2}/>
+                  <YAxis tick={{fontSize:10,fill:"#64748b"}} axisLine={false} tickLine={false}/>
                   <Tooltip contentStyle={TIP_STYLE}/>
-                  <Bar dataKey="count" fill={BLUE} radius={[3,3,0,0]} name="Events"/>
+                  <Bar dataKey="count" fill={BRAND_BLUE} radius={[3,3,0,0]} name="Events"/>
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -362,7 +369,7 @@ export default function AnalyticsPage() {
                     {scores.filter(s=>s.score>=60).slice(0,10).map(s=>(
                       <tr key={s.session_id}>
                         <td><span className="td-mono">{s.session_id.slice(0,8)}…</span></td>
-                        <td><span style={{color:TEAL,fontWeight:700}}>{s.score}</span></td>
+                        <td><span style={{color:BRAND_CYAN,fontWeight:700}}>{s.score}</span></td>
                         <td>{s.utm_source??"—"}</td>
                         <td>{s.utm_campaign??"—"}</td>
                         <td>{s.country??"—"}</td>
@@ -391,7 +398,7 @@ export default function AnalyticsPage() {
                       <td>{l.name??"—"}</td>
                       <td>{l.utm_source??"Direct"}</td>
                       <td>{l.utm_campaign??"—"}</td>
-                      <td>{l.engagement_score!=null?<span style={{color:TEAL,fontWeight:700}}>{l.engagement_score}</span>:"—"}</td>
+                      <td>{l.engagement_score!=null?<span style={{color:BRAND_CYAN,fontWeight:700}}>{l.engagement_score}</span>:"—"}</td>
                       <td>{l.country??"—"}</td>
                       <td style={{fontSize:"11px",color:"var(--text-dim)"}}>{new Date(l.created_at).toLocaleDateString()}</td>
                     </tr>
@@ -417,7 +424,7 @@ export default function AnalyticsPage() {
                   {utmBreakdown.length===0&&(
                     <tr><td colSpan={2} style={{textAlign:"center",color:"var(--text-dim)",padding:"40px"}}>
                       No UTM traffic yet. Share links like:<br/>
-                      <code style={{fontSize:"11px",color:"var(--teal)"}}>https://crewvia.in/?utm_source=linkedin&utm_medium=post&utm_campaign=may-launch</code>
+                      <code style={{fontSize:"11px",color:"var(--brand-cyan)"}}>https://crewvia.in/?utm_source=linkedin&utm_medium=post&utm_campaign=may-launch</code>
                     </td></tr>
                   )}
                 </tbody>

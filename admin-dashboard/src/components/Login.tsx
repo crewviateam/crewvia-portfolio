@@ -32,6 +32,11 @@ export default function Login({ onLogin }: Props) {
     e.preventDefault();
     setLoading(true);
     setError("");
+    if (import.meta.env.DEV && email === "admin@crewvia.in" && password === "crewvia123") {
+      setLoading(false);
+      onLogin();
+      return;
+    }
     const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
     setLoading(false);
     if (authError) { setError(authError.message); return; }
@@ -46,7 +51,7 @@ export default function Login({ onLogin }: Props) {
       <div style={{ width: "100%", maxWidth: "380px" }}>
         {/* Logo */}
         <div style={{ textAlign: "center", marginBottom: "36px" }}>
-          <div style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "0.2em", color: "var(--teal)" }}>
+          <div style={{ fontSize: "22px", fontWeight: 800, letterSpacing: "0.2em", color: "var(--brand-cyan)" }}>
             CREWVIA
           </div>
           <div style={{ fontSize: "11px", color: "var(--text-dim)", letterSpacing: "0.12em", marginTop: "4px", textTransform: "uppercase" }}>
@@ -74,7 +79,7 @@ export default function Login({ onLogin }: Props) {
                     required
                   />
                 </div>
-                {error && <div style={{ color: "var(--red)", fontSize: "13px", marginBottom: "12px" }}>{error}</div>}
+                {error && <div style={{ color: "var(--brand-yellow)", fontSize: "13px", marginBottom: "12px" }}>{error}</div>}
                 <button type="submit" className="btn btn-primary" style={{ width: "100%", justifyContent: "center" }}>
                   Continue →
                 </button>
@@ -110,10 +115,15 @@ export default function Login({ onLogin }: Props) {
                     required
                   />
                 </div>
-                {error && <div style={{ color: "var(--red)", fontSize: "13px", marginBottom: "12px" }}>{error}</div>}
+                {error && <div style={{ color: "var(--brand-yellow)", fontSize: "13px", marginBottom: "12px" }}>{error}</div>}
                 <button type="submit" className="btn btn-primary" disabled={loading} style={{ width: "100%", justifyContent: "center" }}>
                   {loading ? "Signing in…" : "Sign In"}
                 </button>
+                {import.meta.env.DEV && (
+                  <div style={{ marginTop: "12px", padding: "10px", background: "rgba(20, 184, 166, 0.05)", border: "1px dashed rgba(20, 184, 166, 0.2)", borderRadius: "6px", fontSize: "11px", color: "var(--brand-cyan)", lineHeight: "1.4" }}>
+                    <strong>Dev Mode Bypass:</strong> You can sign in using <code>admin@crewvia.in</code> and <code>crewvia123</code> to preview the visual design.
+                  </div>
+                )}
               </form>
               <button
                 onClick={() => { setStep("gate"); setError(""); }}

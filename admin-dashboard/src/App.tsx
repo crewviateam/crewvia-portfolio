@@ -6,6 +6,7 @@
 import { useEffect, useState } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { supabase } from "./lib/supabase";
+import { DeployProvider } from "./context/DeployContext";
 import Login         from "./components/Login";
 import Layout        from "./components/Layout";
 import AnalyticsPage from "./pages/AnalyticsPage";
@@ -21,13 +22,11 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check existing session on mount
     supabase.auth.getSession().then(({ data }) => {
       setAuthed(!!data.session);
       setLoading(false);
     });
 
-    // React to auth state changes (login / logout)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setAuthed(!!session);
     });
@@ -47,19 +46,22 @@ export default function App() {
     return <Login onLogin={() => setAuthed(true)} />;
   }
 
+  // DeployProvider wraps all authenticated pages so every page can call
+  // useDeploy() and the shared DeployBanner renders from Layout.
   return (
-    <Routes>
-      <Route element={<Layout />}>
-        <Route index           element={<AnalyticsPage />} />
-        <Route path="sections" element={<SectionsPage />}  />
-        <Route path="projects" element={<ProjectsPage />}  />
-        <Route path="services" element={<ServicesPage />}  />
-        <Route path="team"     element={<TeamPage />}      />
-        <Route path="process"  element={<ProcessPage />}   />
-        <Route path="content"  element={<ContentPage />}   />
-        {/* Catch-all → dashboard */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Route>
-    </Routes>
+    <DeployProvider>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route index           element={<AnalyticsPage />} />
+          <Route path="sections" element={<SectionsPage />}  />
+          <Route path="projects" element={<ProjectsPage />}  />
+          <Route path="services" element={<ServicesPage />}  />
+          <Route path="team"     element={<TeamPage />}      />
+          <Route path="process"  element={<ProcessPage />}   />
+          <Route path="content"  element={<ContentPage />}   />
+          <Route path="*"        element={<Navigate to="/" replace />} />
+        </Route>
+      </Routes>
+    </DeployProvider>
   );
 }

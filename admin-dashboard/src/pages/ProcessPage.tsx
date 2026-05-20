@@ -11,7 +11,7 @@ interface ProcessStep {
 const BLANK: Partial<ProcessStep> = { number: "", title: "", description: "", sort_order: 99 };
 
 export default function ProcessPage() {
-  const { rows, loading, saving, deploying, error, save, remove } = useCrudTable<ProcessStep>("process_steps");
+  const { rows, loading, saving, error, save, remove } = useCrudTable<ProcessStep>("process_steps");
   const [editing,  setEditing]  = useState<Partial<ProcessStep> | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
@@ -30,20 +30,20 @@ export default function ProcessPage() {
           <div className="page-sub">{rows.length} steps · Edit our work methodology</div>
         </div>
         <div className="flex items-center gap-12">
-          {deploying && <span style={{ fontSize: "12px", color: "var(--teal)" }}>🚀 Deploying…</span>}
+
           <button className="btn btn-primary" onClick={() => setEditing({ ...BLANK })}>+ Add Step</button>
         </div>
       </div>
 
       <div className="admin-content">
-        {error && <div style={{ color: "var(--red)", marginBottom: "12px" }}>⚠ {error}</div>}
+        {error && <div style={{ color: "var(--brand-yellow)", marginBottom: "12px" }}>⚠ {error}</div>}
         {loading ? (
           <div className="flex items-center gap-12" style={{ color: "var(--text-dim)", padding: "40px 0" }}><div className="spinner" /> Loading…</div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
             {rows.map((s) => (
               <div key={s.id} className="card" style={{ display: "flex", alignItems: "flex-start", gap: "20px" }}>
-                <div style={{ fontSize: "28px", fontWeight: 800, color: "var(--teal)", fontFamily: "JetBrains Mono", minWidth: "48px" }}>{s.number}</div>
+                <div style={{ fontSize: "28px", fontWeight: 800, color: "var(--brand-cyan)", fontFamily: "JetBrains Mono", minWidth: "48px" }}>{s.number}</div>
                 <div style={{ flex: 1 }}>
                   <div style={{ fontWeight: 600, color: "var(--text)", marginBottom: "6px" }}>{s.title}</div>
                   <div style={{ fontSize: "13px", color: "var(--text-dim)", lineHeight: "1.6" }}>{s.description}</div>

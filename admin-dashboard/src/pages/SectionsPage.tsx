@@ -7,7 +7,8 @@
  * The portfolio reads these at build-time via fetchCmsData → siteContent.json.
  */
 import { useEffect, useState } from "react";
-import { supabase, triggerRedeploy } from "../lib/supabase";
+import { supabase } from "../lib/supabase";
+import { useDeploy } from "../context/DeployContext";
 
 interface Section {
   key:         string;   // site_content key, e.g. "section_work_visible"
@@ -74,9 +75,10 @@ export default function SectionsPage() {
   const [visibility, setVisibility] = useState<VisibilityMap>({});
   const [loading,    setLoading]    = useState(true);
   const [toggling,   setToggling]   = useState<string | null>(null); // key being toggled
-  const [deploying,  setDeploying]  = useState(false);
   const [success,    setSuccess]    = useState("");
   const [error,      setError]      = useState("");
+
+  const { markDirty } = useDeploy();
 
   useEffect(() => { fetchVisibility(); }, []);
 
@@ -107,39 +109,52 @@ export default function SectionsPage() {
     const current = visibility[section.key] ?? true;
     const next    = !current;
 
-    // Optimistic UI update
     setVisibility(prev => ({ ...prev, [section.key]: next }));
     setToggling(section.key);
     setError("");
     setSuccess("");
 
-    // Upsert into site_content (insert if not exists, update if exists)
     const { error: e } = await supabase
       .from("site_content")
       .upsert(
-        {
-          key:         section.key,
-          value:       next ? "true" : "false",
-          description: `Controls visibility of the ${section.label} section on the portfolio`,
-        },
+        { key: section.key, value: next ? "true" : "false",
+          description: `Controls visibility of the ${section.label} section on the portfolio` },
         { onConflict: "key" }
       );
 
     if (e) {
       console.error("[SectionsPage] upsert error:", e);
       setError(e.message);
-      // Revert optimistic update
       setVisibility(prev => ({ ...prev, [section.key]: current }));
       setToggling(null);
       return;
     }
 
     setToggling(null);
-    setDeploying(true);
-    await triggerRedeploy();
-    setDeploying(false);
-    setSuccess(`"${section.label}" set to ${next ? "Visible ✓" : "Hidden ✓"} — redeploy triggered`);
+    setSuccess(`"${section.label}" set to ${next ? "Visible ✓" : "Hidden ✓"}`);
+
+    const capturedKey     = section.key;
+    const capturedLabel   = section.label;
+    const capturedCurrent = current; // original value for undo/net-zero
+
+    markDirty({
+      changeKey:     `site_content::${capturedKey}`,
+      label:         `Section "${capturedLabel}" ${next ? "shown" : "hidden"}`,
+      previousValue: capturedCurrent,  // boolean before toggle
+      currentValue:  next,             // boolean after toggle
+      undoFn: async () => {
+        await supabase.from("site_content").upsert(
+          { key: capturedKey, value: capturedCurrent ? "true" : "false",
+            description: `Controls visibility of the ${capturedLabel} section on the portfolio` },
+          { onConflict: "key" }
+        );
+        // Update optimistic local state
+        setVisibility(prev => ({ ...prev, [capturedKey]: capturedCurrent }));
+        await fetchVisibility();
+      },
+    });
   }
+
 
   const visibleCount = Object.values(visibility).filter(Boolean).length;
 
@@ -152,14 +167,13 @@ export default function SectionsPage() {
             {loading ? "Loading…" : `${visibleCount} of ${SECTIONS.length} sections visible`}
           </div>
         </div>
-        {deploying && <span style={{ fontSize: "12px", color: "var(--teal)" }}>🚀 Deploying…</span>}
       </div>
 
       <div className="admin-content">
         {success && <div className="deploy-bar">✓ {success}</div>}
-        {error   && <div style={{ color: "var(--red)", marginBottom: "12px", fontSize: "13px" }}>⚠ {error}</div>}
+        {error   && <div style={{ color: "var(--brand-yellow)", marginBottom: "12px", fontSize: "13px" }}>⚠ {error}</div>}
 
-        <div style={{ marginBottom: "16px", padding: "12px 16px", background: "var(--surface)", borderRadius: "8px", borderLeft: "3px solid var(--teal)", fontSize: "13px", color: "var(--text-dim)", lineHeight: "1.6" }}>
+        <div style={{ marginBottom: "16px", padding: "12px 16px", background: "var(--surface)", borderRadius: "8px", borderLeft: "3px solid var(--brand-cyan)", fontSize: "13px", color: "var(--text-dim)", lineHeight: "1.6" }}>
           Toggling a section triggers a <strong style={{ color: "var(--text)" }}>Vercel redeploy</strong> — changes go live on the portfolio in ~60 seconds.
           Hidden sections are <strong style={{ color: "var(--text)" }}>completely removed</strong> from the HTML at build time (zero JS overhead).
         </div>
@@ -191,7 +205,7 @@ export default function SectionsPage() {
                   {/* Order badge */}
                   <div style={{
                     width: "28px", height: "28px", borderRadius: "50%",
-                    background: isVisible ? "var(--teal)" : "var(--surface)",
+                    background: isVisible ? "var(--brand-cyan)" : "var(--surface)",
                     color: isVisible ? "#000" : "var(--text-dim)",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     fontSize: "11px", fontWeight: 700, flexShrink: 0,
@@ -246,7 +260,7 @@ export default function SectionsPage() {
                       width:        "44px",
                       height:       "24px",
                       borderRadius: "12px",
-                      background:   isVisible ? "var(--teal)" : "rgba(255,255,255,0.1)",
+                      background:   isVisible ? "var(--brand-cyan)" : "rgba(255,255,255,0.1)",
                       transition:   "background 0.25s",
                       position:     "relative",
                     }}>

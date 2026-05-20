@@ -16,7 +16,7 @@ const BLANK: Partial<Project> = {
 };
 
 export default function ProjectsPage() {
-  const { rows, loading, saving, deploying, error, save, remove } = useCrudTable<Project>("projects");
+  const { rows, loading, saving, error, save, remove } = useCrudTable<Project>("projects");
   const [editing,  setEditing]  = useState<Partial<Project> | null>(null);
   const [deleting, setDeleting] = useState<string | null>(null);
 
@@ -38,13 +38,13 @@ export default function ProjectsPage() {
           <div className="page-sub">{rows.length} projects · Edit portfolio work</div>
         </div>
         <div className="flex items-center gap-12">
-          {deploying && <span style={{ fontSize: "12px", color: "var(--teal)" }}>🚀 Deploying…</span>}
+
           <button className="btn btn-primary" onClick={() => setEditing({ ...BLANK })}>+ Add Project</button>
         </div>
       </div>
 
       <div className="admin-content">
-        {error && <div style={{ color: "var(--red)", marginBottom: "12px", fontSize: "13px" }}>⚠ {error}</div>}
+        {error && <div style={{ color: "var(--brand-yellow)", marginBottom: "12px", fontSize: "13px" }}>⚠ {error}</div>}
 
         {loading ? (
           <div className="flex items-center gap-12" style={{ color: "var(--text-dim)", padding: "40px 0" }}>

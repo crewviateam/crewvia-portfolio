@@ -6,7 +6,8 @@
  * GROUPS keys updated to match actual schema.sql seed data keys exactly.
  */
 import { useEffect, useState } from "react";
-import { supabase, triggerRedeploy } from "../lib/supabase";
+import { supabase } from "../lib/supabase";
+import { useDeploy } from "../context/DeployContext";
 
 // site_content has NO id column — key IS the primary key
 interface ContentRow { key: string; value: string; description: string | null; }
@@ -44,14 +45,15 @@ const GROUPS: { label: string; keys: string[] }[] = [
 ];
 
 export default function ContentPage() {
-  const [rows,      setRows]      = useState<ContentRow[]>([]);
-  const [loading,   setLoading]   = useState(true);
-  const [editing,   setEditing]   = useState<ContentRow | null>(null);
-  const [value,     setValue]     = useState("");
-  const [saving,    setSaving]    = useState(false);
-  const [deploying, setDeploying] = useState(false);
-  const [error,     setError]     = useState("");
-  const [success,   setSuccess]   = useState("");
+  const [rows,    setRows]    = useState<ContentRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editing, setEditing] = useState<ContentRow | null>(null);
+  const [value,   setValue]   = useState("");
+  const [saving,  setSaving]  = useState(false);
+  const [error,   setError]   = useState("");
+  const [success, setSuccess] = useState("");
+
+  const { markDirty } = useDeploy();
 
   useEffect(() => { fetchRows(); }, []);
 
@@ -85,10 +87,12 @@ export default function ContentPage() {
     setSaving(true);
     setError("");
 
-    // ✅ FIX: Use .eq("key", editing.key) — site_content has no `id` column
+    const previousValue = editing.value; // capture BEFORE saving
+    const newValue      = value;
+
     const { error: e2 } = await supabase
       .from("site_content")
-      .update({ value })
+      .update({ value: newValue })
       .eq("key", editing.key);
 
     if (e2) {
@@ -99,13 +103,28 @@ export default function ContentPage() {
     }
 
     setSaving(false);
-    setDeploying(true);
-    await triggerRedeploy();
-    setDeploying(false);
-    setSuccess(`Saved "${editing.key}" ✓  Redeploy triggered — live site updates in ~60s`);
+    setSuccess(`Saved "${editing.key}" ✓`);
+
+    const capturedKey = editing.key; // capture for closure
+    markDirty({
+      changeKey:     `site_content::${capturedKey}`,
+      label:         `Updated ${capturedKey}`,
+      previousValue,
+      currentValue:  newValue,
+      // undoFn: reverts the value back to what it was before this session's first edit
+      undoFn: async () => {
+        // NOTE: DeployContext passes the *original* value (before ANY changes this session)
+        // but we only have access to previousValue here. The context handles original tracking.
+        // We revert to previousValue — if undone multiple times, context's net-zero check handles it.
+        await supabase.from("site_content").update({ value: previousValue }).eq("key", capturedKey);
+        await fetchRows();
+      },
+    });
+
     setEditing(null);
     await fetchRows();
   }
+
 
   const getRow = (key: string) => rows.find(r => r.key === key);
   const isJson = (key: string) => key.includes("statements") || key.includes("items");
@@ -117,12 +136,13 @@ export default function ContentPage() {
           <div className="page-title">Site Content</div>
           <div className="page-sub">All editable text on the portfolio · {rows.length} entries</div>
         </div>
-        {deploying && <span style={{ fontSize: "12px", color: "var(--teal)" }}>🚀 Deploying…</span>}
+
+
       </div>
 
       <div className="admin-content">
         {success && <div className="deploy-bar">✓ {success}</div>}
-        {error && <div style={{ color: "var(--red)", marginBottom: "12px", fontSize: "13px" }}>⚠ {error}</div>}
+        {error && <div style={{ color: "var(--brand-yellow)", marginBottom: "12px", fontSize: "13px" }}>⚠ {error}</div>}
 
         {loading ? (
           <div className="flex items-center gap-12" style={{ color: "var(--text-dim)", padding: "40px 0" }}>
@@ -219,7 +239,7 @@ export default function ContentPage() {
             <div className="modal-header">
               <div>
                 <h2>Edit Content</h2>
-                <div style={{ fontSize: "12px", color: "var(--teal)", fontFamily: "JetBrains Mono, monospace", marginTop: "2px" }}>
+                <div style={{ fontSize: "12px", color: "var(--brand-cyan)", fontFamily: "JetBrains Mono, monospace", marginTop: "2px" }}>
                   {editing.key}
                 </div>
               </div>
@@ -227,13 +247,13 @@ export default function ContentPage() {
             </div>
 
             {editing.description && (
-              <div style={{ fontSize: "12px", color: "var(--text-dim)", marginBottom: "14px", padding: "8px 10px", background: "var(--surface)", borderRadius: "4px", borderLeft: "2px solid var(--teal)" }}>
+              <div style={{ fontSize: "12px", color: "var(--text-dim)", marginBottom: "14px", padding: "8px 10px", background: "var(--surface)", borderRadius: "4px", borderLeft: "2px solid var(--brand-cyan)" }}>
                 {editing.description}
               </div>
             )}
 
             {isJson(editing.key) && (
-              <div style={{ fontSize: "12px", color: "var(--amber)", marginBottom: "10px" }}>
+              <div style={{ fontSize: "12px", color: "var(--brand-yellow)", marginBottom: "10px" }}>
                 ⚠ JSON field — must be valid JSON array e.g. <code>["Item 1","Item 2"]</code>
               </div>
             )}
@@ -252,10 +272,10 @@ export default function ContentPage() {
                   required
                 />
               </div>
-              {error && <div style={{ color: "var(--red)", marginBottom: "10px", fontSize: "13px" }}>⚠ {error}</div>}
+              {error && <div style={{ color: "var(--brand-yellow)", marginBottom: "10px", fontSize: "13px" }}>⚠ {error}</div>}
               <div style={{ display: "flex", gap: "10px" }}>
-                <button type="submit" className="btn btn-primary" disabled={saving || deploying}>
-                  {saving ? "Saving…" : deploying ? "Deploying…" : "Save & Deploy"}
+                <button type="submit" className="btn btn-primary" disabled={saving}>
+                  {saving ? "Saving…" : "Save"}
                 </button>
                 <button type="button" className="btn btn-ghost" onClick={() => setEditing(null)}>Cancel</button>
               </div>
