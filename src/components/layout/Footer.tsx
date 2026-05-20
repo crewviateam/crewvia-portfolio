@@ -108,7 +108,7 @@ export default function Footer() {
         </div>
 
         <div className="mt-20 flex flex-col md:flex-row justify-between items-center text-xs text-white/40 uppercase tracking-widest font-mono">
-          <span className="text-center md:text-left">© 2025 CREWVIA • Creative Freedom, United Crew</span>
+          <span className="text-center md:text-left">© 2026 CREWVIA • Creative Freedom, United Crew</span>
           <div className="flex gap-8 mt-4 md:mt-0">
             <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-white transition-colors">Terms of Service</a>
@@ -119,7 +119,7 @@ export default function Footer() {
       {/* Giant background text — decorative only */}
       <div className="absolute bottom-0 left-0 w-full overflow-hidden pointer-events-none" style={{ opacity: 0.05 }} aria-hidden="true">
         <p
-          className="text-[18vw] leading-[0.7] font-black text-center translate-y-[20%]"
+          className="text-[18vw] leading-[0.7] font-heading font-black text-center translate-y-[20%]"
           style={{ color: "#2ec4b6" }}
         >
           CREW
