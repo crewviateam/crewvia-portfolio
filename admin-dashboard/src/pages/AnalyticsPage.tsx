@@ -1,7 +1,6 @@
 /**
- * src/pages/AnalyticsPage.tsx
- * Real-time analytics dashboard with recharts.
- * Queries the analytics_events table in Supabase.
+ * src/pages/AnalyticsPage.tsx — v2
+ * Phases 3,4,5,7,8,9 dashboard additions.
  */
 import { useEffect, useState } from "react";
 import {
@@ -10,284 +9,421 @@ import {
 } from "recharts";
 import { supabase } from "../lib/supabase";
 
-const TEAL  = "#2ec4b6";
-const LIME  = "#d4e157";
-const BLUE  = "#6366f1";
-const PINK  = "#ec4899";
+const TEAL="#2ec4b6", LIME="#d4e157", BLUE="#6366f1", PINK="#ec4899";
+const COLORS=[TEAL,LIME,BLUE,PINK,"#f59e0b","#22c55e"];
+const TIP_STYLE={backgroundColor:"#141414",border:"1px solid #2a2a2a",borderRadius:"6px",fontSize:"12px",color:"#e8e8e8"};
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface Event {
-  id: string;
-  session_id: string;
-  event_type: string;
-  event_data: Record<string, unknown> | null;
-  device_type: string | null;
-  country: string | null;
-  created_at: string;
+interface AnalyticsEvent {
+  id:string; session_id:string; event_type:string;
+  event_data:Record<string,unknown>|null;
+  device_type:string|null; country:string|null; city:string|null;
+  referrer:string|null; utm_source:string|null; utm_campaign:string|null;
+  visitor_id:string|null; created_at:string;
+}
+interface SessionScore { session_id:string; score:number; visitor_id:string|null; country:string|null; utm_source:string|null; utm_campaign:string|null; updated_at:string; }
+interface Lead { id:number; email:string; name:string|null; utm_source:string|null; utm_campaign:string|null; engagement_score:number|null; country:string|null; created_at:string; }
+
+// ── Referrer parser (Phase 4) ─────────────────────────────────────────────────
+function parseReferrer(url:string): string {
+  if (!url) return "Direct / Dark Social";
+  if (url.includes("linkedin"))  return "LinkedIn";
+  if (url.includes("instagram")) return "Instagram";
+  if (url.includes("google"))    return "Google Search";
+  if (url.includes("behance"))   return "Behance";
+  if (url.includes("twitter") || url.includes("x.com")) return "Twitter/X";
+  if (url.includes("mail.google") || url.includes("outlook")) return "Email";
+  if (url.includes("whatsapp"))  return "WhatsApp";
+  try { return new URL(url).hostname; } catch { return "Other"; }
 }
 
-interface DailyView { date: string; views: number; sessions: number; }
-interface DeviceDist { name: string; value: number; }
-interface EventCount { event: string; count: number; }
+// ── Session quality (Phase 5) ─────────────────────────────────────────────────
+function sessionQuality(seconds:number): string {
+  if (seconds < 15)  return "Bounce";
+  if (seconds < 60)  return "Skimmer";
+  if (seconds < 180) return "Reader";
+  if (seconds < 420) return "Evaluator";
+  return "Deep Diver";
+}
 
-const COLORS = [TEAL, LIME, BLUE, PINK, "#f59e0b", "#22c55e"];
-
-// ─── Component ────────────────────────────────────────────────────────────────
 export default function AnalyticsPage() {
-  const [events,       setEvents]       = useState<Event[]>([]);
-  const [loading,      setLoading]      = useState(true);
-  const [range,        setRange]        = useState<7 | 14 | 30>(30);
+  const [events,   setEvents]   = useState<AnalyticsEvent[]>([]);
+  const [scores,   setScores]   = useState<SessionScore[]>([]);
+  const [leads,    setLeads]    = useState<Lead[]>([]);
+  const [loading,  setLoading]  = useState(true);
+  const [range,    setRange]    = useState<7|14|30>(30);
+  const [tab,      setTab]      = useState<"overview"|"leads"|"utm">("overview");
 
-  useEffect(() => {
-    fetchEvents();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [range]);
+  useEffect(() => { loadAll(); }, [range]);
 
-  async function fetchEvents() {
+  async function loadAll() {
     setLoading(true);
-    const since = new Date();
-    since.setDate(since.getDate() - range);
+    const since = new Date(); since.setDate(since.getDate()-range);
+    const iso = since.toISOString();
 
-    const { data, error } = await supabase
-      .from("analytics_events")
-      .select("*")
-      .gte("created_at", since.toISOString())
-      .order("created_at", { ascending: true });
+    const [evRes, scRes, ldRes] = await Promise.all([
+      supabase.from("analytics_events").select("*").gte("created_at",iso).order("created_at",{ascending:true}),
+      supabase.from("session_scores").select("*").gte("updated_at",iso).order("score",{ascending:false}),
+      supabase.from("leads").select("id,email,name,utm_source,utm_campaign,engagement_score,country,created_at").gte("created_at",iso).order("created_at",{ascending:false}),
+    ]);
 
-    if (!error && data) setEvents(data as Event[]);
+    if (!evRes.error && evRes.data) setEvents(evRes.data as AnalyticsEvent[]);
+    if (!scRes.error && scRes.data) setScores(scRes.data as SessionScore[]);
+    if (!ldRes.error && ldRes.data) setLeads(ldRes.data as Lead[]);
     setLoading(false);
   }
 
-  // ── Computed metrics ──────────────────────────────────────────────────────
-  const pageViews     = events.filter(e => e.event_type === "page_view");
-  const uniqueSessions = new Set(events.map(e => e.session_id)).size;
-  const ctaClicks     = events.filter(e => e.event_type === "cta_click").length;
-  const linkClicks    = events.filter(e => e.event_type === "link_click").length;
+  // ── Computed ──────────────────────────────────────────────────────────────
+  const pageViews      = events.filter(e=>e.event_type==="page_view");
+  const uniqueSessions = new Set(events.map(e=>e.session_id)).size;
+  const ctaClicks      = events.filter(e=>e.event_type==="cta_click").length;
+  const linkClicks     = events.filter(e=>e.event_type==="link_click").length;
+  const hotLeads       = scores.filter(s=>s.score>=60).length;
+  const returnVisitors = (() => {
+    const sessions = events.map(e=>({vid:e.visitor_id,sid:e.session_id}));
+    const vidSessions: Record<string,Set<string>> = {};
+    sessions.forEach(({vid,sid})=>{ if(vid){ if(!vidSessions[vid]) vidSessions[vid]=new Set(); vidSessions[vid].add(sid); }});
+    return Object.values(vidSessions).filter(s=>s.size>1).length;
+  })();
 
   const avgTime = (() => {
-    const timeEvents = events.filter(e => e.event_type === "time_on_page");
-    if (!timeEvents.length) return 0;
-    const total = timeEvents.reduce((sum, e) => sum + ((e.event_data?.seconds as number) ?? 0), 0);
-    return Math.round(total / timeEvents.length);
+    const t=events.filter(e=>e.event_type==="time_on_page");
+    if(!t.length) return 0;
+    return Math.round(t.reduce((s,e)=>s+((e.event_data?.seconds as number)??0),0)/t.length);
   })();
 
-  // Daily page views
-  const dailyViews: DailyView[] = (() => {
-    const map: Record<string, { views: number; sessions: Set<string> }> = {};
-    pageViews.forEach(e => {
-      const day = e.created_at.slice(0, 10);
-      if (!map[day]) map[day] = { views: 0, sessions: new Set() };
-      map[day].views++;
-      map[day].sessions.add(e.session_id);
+  // Daily chart
+  const dailyViews = (() => {
+    const map:Record<string,{views:number;sessions:Set<string>}> = {};
+    pageViews.forEach(e=>{
+      const d=e.created_at.slice(0,10);
+      if(!map[d]) map[d]={views:0,sessions:new Set()};
+      map[d].views++; map[d].sessions.add(e.session_id);
     });
-    return Object.entries(map).map(([date, v]) => ({
-      date: new Date(date).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
-      views: v.views,
-      sessions: v.sessions.size,
-    }));
-  })();
-
-  // Device breakdown
-  const deviceDist: DeviceDist[] = (() => {
-    const map: Record<string, number> = {};
-    events.forEach(e => {
-      const d = e.device_type ?? "unknown";
-      map[d] = (map[d] ?? 0) + 1;
-    });
-    return Object.entries(map).map(([name, value]) => ({ name, value }));
-  })();
-
-  // Event type breakdown
-  const eventCounts: EventCount[] = (() => {
-    const map: Record<string, number> = {};
-    events.forEach(e => { map[e.event_type] = (map[e.event_type] ?? 0) + 1; });
-    return Object.entries(map)
-      .map(([event, count]) => ({ event, count }))
-      .sort((a, b) => b.count - a.count);
+    return Object.entries(map).map(([date,v])=>({date:new Date(date).toLocaleDateString("en-US",{month:"short",day:"numeric"}),views:v.views,sessions:v.sessions.size}));
   })();
 
   // Scroll depth
-  const scrollDepths = [25, 50, 75, 100].map(depth => ({
-    depth: `${depth}%`,
-    users: events.filter(e => e.event_type === "scroll_depth" && (e.event_data?.depth as number) === depth).length,
-  }));
+  const scrollDepths=[25,50,75,100].map(depth=>({depth:`${depth}%`,users:events.filter(e=>e.event_type==="scroll_depth"&&(e.event_data?.depth as number)===depth).length}));
 
-  // Country breakdown (top 6)
-  const countries = (() => {
-    const map: Record<string, number> = {};
-    events.forEach(e => { const c = e.country ?? "Unknown"; map[c] = (map[c] ?? 0) + 1; });
-    return Object.entries(map)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 6)
-      .map(([country, count]) => ({ country, count }));
+
+
+  // Phase 4: Referrer sources
+  const referrerDist = (() => {
+    const m:Record<string,number>={};
+    events.filter(e=>e.event_type==="page_view").forEach(e=>{
+      const label=parseReferrer(e.referrer??"");
+      m[label]=(m[label]??0)+1;
+    });
+    return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([name,value])=>({name,value}));
   })();
 
-  const tooltipStyle = {
-    backgroundColor: "#141414",
-    border: "1px solid #2a2a2a",
-    borderRadius: "6px",
-    fontSize: "12px",
-    color: "#e8e8e8",
-  };
+  // Phase 5: Session quality
+  const qualityDist = (() => {
+    const m:Record<string,number>={Bounce:0,Skimmer:0,Reader:0,Evaluator:0,"Deep Diver":0};
+    events.filter(e=>e.event_type==="time_on_page").forEach(e=>{
+      const s=(e.event_data?.seconds as number)??0;
+      m[sessionQuality(s)]=(m[sessionQuality(s)]??0)+1;
+    });
+    return Object.entries(m).map(([name,value])=>({name,value})).filter(x=>x.value>0);
+  })();
+
+  // Phase 8: Hour-of-day pattern
+  const hourlyPattern = (() => {
+    const m:Record<number,number>={};
+    for(let i=0;i<24;i++) m[i]=0;
+    events.forEach(e=>{ const h=new Date(e.created_at).getHours(); m[h]=(m[h]??0)+1; });
+    return Object.entries(m).map(([h,count])=>({hour:`${h}:00`,count}));
+  })();
+
+  // Phase 9: Social attribution
+  const socialLinks = (() => {
+    const m:Record<string,number>={};
+    events.filter(e=>e.event_type==="link_click").forEach(e=>{
+      const label=(e.event_data?.label as string)??"unknown";
+      m[label]=(m[label]??0)+1;
+    });
+    return Object.entries(m).sort((a,b)=>b[1]-a[1]).map(([name,count])=>({name,count}));
+  })();
+
+  // Phase 3: Score distribution
+  const scoreDist = [
+    {range:"0–30",label:"Casual",count:scores.filter(s=>s.score<=30).length},
+    {range:"31–60",label:"Interested",count:scores.filter(s=>s.score>30&&s.score<=60).length},
+    {range:"61–100",label:"Hot Lead",count:scores.filter(s=>s.score>60).length},
+  ];
+
+  // Phase 10: cities
+  const cities = (() => {
+    const m:Record<string,number>={};
+    events.forEach(e=>{ if(e.city){ m[e.city]=(m[e.city]??0)+1; }});
+    return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([city,count])=>({city,count}));
+  })();
+
+  // UTM campaign breakdown
+  const utmBreakdown = (() => {
+    const m:Record<string,number>={};
+    events.filter(e=>e.utm_source).forEach(e=>{ const k=`${e.utm_source}/${e.utm_campaign??"—"}`; m[k]=(m[k]??0)+1; });
+    return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,10).map(([campaign,count])=>({campaign,count}));
+  })();
+
+  const countries = (() => {
+    const m:Record<string,number>={};
+    events.forEach(e=>{const c=e.country??"Unknown"; m[c]=(m[c]??0)+1;});
+    return Object.entries(m).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([country,count])=>({country,count}));
+  })();
 
   return (
     <>
-      {/* Header */}
       <div className="admin-header">
         <div>
           <div className="page-title">Analytics Dashboard</div>
-          <div className="page-sub">Real-time visitor insights</div>
+          <div className="page-sub">Real-time visitor intelligence</div>
         </div>
         <div className="flex items-center gap-8">
-          {[7, 14, 30].map(d => (
-            <button
-              key={d}
-              onClick={() => setRange(d as 7 | 14 | 30)}
-              className={`btn btn-sm ${range === d ? "btn-primary" : "btn-ghost"}`}
-            >
-              {d}d
-            </button>
+          {[7,14,30].map(d=>(
+            <button key={d} onClick={()=>setRange(d as 7|14|30)} className={`btn btn-sm ${range===d?"btn-primary":"btn-ghost"}`}>{d}d</button>
           ))}
-          <button onClick={fetchEvents} className="btn btn-ghost btn-sm">↻ Refresh</button>
+          <button onClick={loadAll} className="btn btn-ghost btn-sm">↻</button>
         </div>
+      </div>
+
+      {/* Tab bar */}
+      <div style={{display:"flex",gap:"4px",padding:"0 24px",borderBottom:"1px solid var(--border)",marginBottom:"0"}}>
+        {(["overview","leads","utm"] as const).map(t=>(
+          <button key={t} onClick={()=>setTab(t)}
+            style={{padding:"10px 16px",background:"none",border:"none",cursor:"pointer",fontSize:"13px",fontWeight:600,
+              color:tab===t?"var(--teal)":"var(--text-dim)",borderBottom:tab===t?"2px solid var(--teal)":"2px solid transparent",transition:"color 0.2s"}}>
+            {t==="overview"?"Overview":t==="leads"?`Leads (${leads.length})`:"UTM / Campaigns"}
+          </button>
+        ))}
       </div>
 
       <div className="admin-content">
         {loading ? (
-          <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "var(--text-dim)", padding: "40px 0" }}>
-            <div className="spinner" /> Loading analytics data…
-          </div>
-        ) : (
+          <div style={{display:"flex",alignItems:"center",gap:"10px",color:"var(--text-dim)",padding:"40px 0"}}><div className="spinner"/> Loading…</div>
+        ) : tab==="overview" ? (
           <>
-            {/* ── Stat Cards ── */}
-            <div className="grid-4" style={{ marginBottom: "24px" }}>
-              <div className="stat-card">
-                <div className="stat-value">{pageViews.length.toLocaleString()}</div>
-                <div className="stat-label">Page Views</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-value">{uniqueSessions.toLocaleString()}</div>
-                <div className="stat-label">Unique Sessions</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-value">{avgTime > 0 ? `${avgTime}s` : "—"}</div>
-                <div className="stat-label">Avg. Time on Page</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-value">{(ctaClicks + linkClicks).toLocaleString()}</div>
-                <div className="stat-label">Total Clicks</div>
-              </div>
+            {/* Stat cards */}
+            <div className="grid-4" style={{marginBottom:"20px"}}>
+              {[
+                {label:"Page Views",   value:pageViews.length.toLocaleString()},
+                {label:"Unique Sessions",value:uniqueSessions.toLocaleString()},
+                {label:"Avg. Time",    value:avgTime>0?`${avgTime}s`:"—"},
+                {label:"Total Clicks", value:(ctaClicks+linkClicks).toLocaleString()},
+                {label:"Hot Leads 🔥", value:hotLeads.toString()},
+                {label:"Return Visitors",value:returnVisitors.toString()},
+                {label:"Leads Captured",value:leads.length.toString()},
+                {label:"UTM Sessions", value:events.filter(e=>e.utm_source).length.toString()},
+              ].map(({label,value})=>(
+                <div key={label} className="stat-card">
+                  <div className="stat-value">{value}</div>
+                  <div className="stat-label">{label}</div>
+                </div>
+              ))}
             </div>
 
-            {/* ── Page Views Chart ── */}
-            <div className="card" style={{ marginBottom: "20px" }}>
-              <h3 style={{ marginBottom: "20px" }}>Daily Page Views & Sessions</h3>
-              {dailyViews.length === 0 ? (
-                <div className="empty-state"><div className="icon">📈</div><p>No data yet for this period</p></div>
-              ) : (
-                <ResponsiveContainer width="100%" height={220}>
-                  <AreaChart data={dailyViews}>
-                    <defs>
-                      <linearGradient id="gv" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor={TEAL} stopOpacity={0.2} />
-                        <stop offset="95%" stopColor={TEAL} stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="gs" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%"  stopColor={LIME} stopOpacity={0.2} />
-                        <stop offset="95%" stopColor={LIME} stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11, fill: "#6b6b6b" }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: "#6b6b6b" }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={tooltipStyle} />
-                    <Legend iconType="circle" iconSize={8} wrapperStyle={{ fontSize: "12px" }} />
-                    <Area type="monotone" dataKey="views"    stroke={TEAL} fill="url(#gv)" strokeWidth={2} name="Page Views" />
-                    <Area type="monotone" dataKey="sessions" stroke={LIME} fill="url(#gs)" strokeWidth={2} name="Sessions" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              )}
+            {/* Traffic chart */}
+            <div className="card" style={{marginBottom:"20px"}}>
+              <h3 style={{marginBottom:"16px"}}>Daily Traffic</h3>
+              <ResponsiveContainer width="100%" height={200}>
+                <AreaChart data={dailyViews}>
+                  <defs>
+                    <linearGradient id="gv" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={TEAL} stopOpacity={0.2}/><stop offset="95%" stopColor={TEAL} stopOpacity={0}/></linearGradient>
+                    <linearGradient id="gs" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor={LIME} stopOpacity={0.2}/><stop offset="95%" stopColor={LIME} stopOpacity={0}/></linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e"/>
+                  <XAxis dataKey="date" tick={{fontSize:11,fill:"#6b6b6b"}} axisLine={false} tickLine={false}/>
+                  <YAxis tick={{fontSize:11,fill:"#6b6b6b"}} axisLine={false} tickLine={false}/>
+                  <Tooltip contentStyle={TIP_STYLE}/>
+                  <Legend iconType="circle" iconSize={8} wrapperStyle={{fontSize:"12px"}}/>
+                  <Area type="monotone" dataKey="views" stroke={TEAL} fill="url(#gv)" strokeWidth={2} name="Page Views"/>
+                  <Area type="monotone" dataKey="sessions" stroke={LIME} fill="url(#gs)" strokeWidth={2} name="Sessions"/>
+                </AreaChart>
+              </ResponsiveContainer>
             </div>
 
-            {/* ── Row 2: Scroll Depth + Device ── */}
-            <div className="grid-2" style={{ marginBottom: "20px" }}>
+            {/* Row: Scroll Depth + Device + Referrer */}
+            <div className="grid-2" style={{marginBottom:"20px"}}>
               <div className="card">
-                <h3 style={{ marginBottom: "20px" }}>Scroll Depth</h3>
-                <ResponsiveContainer width="100%" height={180}>
-                  <BarChart data={scrollDepths} barSize={32}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" vertical={false} />
-                    <XAxis dataKey="depth" tick={{ fontSize: 11, fill: "#6b6b6b" }} axisLine={false} tickLine={false} />
-                    <YAxis tick={{ fontSize: 11, fill: "#6b6b6b" }} axisLine={false} tickLine={false} />
-                    <Tooltip contentStyle={tooltipStyle} />
-                    <Bar dataKey="users" fill={TEAL} radius={[4, 4, 0, 0]} name="Users" />
+                <h3 style={{marginBottom:"16px"}}>Scroll Depth</h3>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={scrollDepths} barSize={28}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" vertical={false}/>
+                    <XAxis dataKey="depth" tick={{fontSize:11,fill:"#6b6b6b"}} axisLine={false} tickLine={false}/>
+                    <YAxis tick={{fontSize:11,fill:"#6b6b6b"}} axisLine={false} tickLine={false}/>
+                    <Tooltip contentStyle={TIP_STYLE}/>
+                    <Bar dataKey="users" fill={TEAL} radius={[4,4,0,0]} name="Sessions"/>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
               <div className="card">
-                <h3 style={{ marginBottom: "20px" }}>Device Breakdown</h3>
-                {deviceDist.length === 0 ? (
-                  <div className="empty-state"><p>No data</p></div>
-                ) : (
-                  <ResponsiveContainer width="100%" height={180}>
+                <h3 style={{marginBottom:"16px"}}>Traffic Sources</h3>
+                {referrerDist.length===0?<div className="empty-state"><p>No data yet</p></div>:(
+                  <ResponsiveContainer width="100%" height={160}>
                     <PieChart>
-                      <Pie data={deviceDist} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={65} label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`} labelLine={false} fontSize={11}>
-                        {deviceDist.map((_, index) => (
-                          <Cell key={index} fill={COLORS[index % COLORS.length]} />
-                        ))}
+                      <Pie data={referrerDist} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={58} label={({name,percent})=>`${name} ${((percent??0)*100).toFixed(0)}%`} labelLine={false} fontSize={10}>
+                        {referrerDist.map((_,i)=><Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
                       </Pie>
-                      <Tooltip contentStyle={tooltipStyle} />
+                      <Tooltip contentStyle={TIP_STYLE}/>
                     </PieChart>
                   </ResponsiveContainer>
                 )}
               </div>
             </div>
 
-            {/* ── Row 3: Event breakdown + Countries ── */}
-            <div className="grid-2">
+            {/* Row: Engagement Score + Session Quality */}
+            <div className="grid-2" style={{marginBottom:"20px"}}>
               <div className="card">
-                <h3 style={{ marginBottom: "16px" }}>Event Breakdown</h3>
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr><th>Event Type</th><th>Count</th></tr>
-                    </thead>
-                    <tbody>
-                      {eventCounts.map(({ event, count }) => (
-                        <tr key={event}>
-                          <td><span className="td-mono">{event}</span></td>
-                          <td className="td-primary">{count.toLocaleString()}</td>
-                        </tr>
-                      ))}
-                      {eventCounts.length === 0 && (
-                        <tr><td colSpan={2} style={{ textAlign: "center", color: "var(--text-dim)", padding: "24px" }}>No events yet</td></tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
+                <h3 style={{marginBottom:"16px"}}>Engagement Score Distribution</h3>
+                <ResponsiveContainer width="100%" height={160}>
+                  <BarChart data={scoreDist} barSize={40}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" vertical={false}/>
+                    <XAxis dataKey="range" tick={{fontSize:11,fill:"#6b6b6b"}} axisLine={false} tickLine={false}/>
+                    <YAxis tick={{fontSize:11,fill:"#6b6b6b"}} axisLine={false} tickLine={false}/>
+                    <Tooltip contentStyle={TIP_STYLE} formatter={(v,_,p)=>[v,p.payload.label]}/>
+                    <Bar dataKey="count" radius={[4,4,0,0]} name="Sessions">
+                      {scoreDist.map((_,i)=><Cell key={i} fill={i===2?TEAL:i===1?LIME:BLUE}/>)}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
               <div className="card">
-                <h3 style={{ marginBottom: "16px" }}>Top Countries</h3>
+                <h3 style={{marginBottom:"16px"}}>Session Quality</h3>
+                {qualityDist.length===0?<div className="empty-state"><p>No time data yet</p></div>:(
+                  <ResponsiveContainer width="100%" height={160}>
+                    <PieChart>
+                      <Pie data={qualityDist} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={58} label={({name,percent})=>`${name} ${((percent??0)*100).toFixed(0)}%`} labelLine={false} fontSize={10}>
+                        {qualityDist.map((_,i)=><Cell key={i} fill={COLORS[i%COLORS.length]}/>)}
+                      </Pie>
+                      <Tooltip contentStyle={TIP_STYLE}/>
+                    </PieChart>
+                  </ResponsiveContainer>
+                )}
+              </div>
+            </div>
+
+            {/* Row: Hour-of-day pattern */}
+            <div className="card" style={{marginBottom:"20px"}}>
+              <h3 style={{marginBottom:"16px"}}>Activity by Hour of Day</h3>
+              <ResponsiveContainer width="100%" height={140}>
+                <BarChart data={hourlyPattern} barSize={12}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1e1e1e" vertical={false}/>
+                  <XAxis dataKey="hour" tick={{fontSize:10,fill:"#6b6b6b"}} axisLine={false} tickLine={false} interval={2}/>
+                  <YAxis tick={{fontSize:10,fill:"#6b6b6b"}} axisLine={false} tickLine={false}/>
+                  <Tooltip contentStyle={TIP_STYLE}/>
+                  <Bar dataKey="count" fill={BLUE} radius={[3,3,0,0]} name="Events"/>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Row: Social attribution + Countries + Cities */}
+            <div className="grid-2" style={{marginBottom:"20px"}}>
+              <div className="card">
+                <h3 style={{marginBottom:"12px"}}>Social Link Clicks</h3>
+                {socialLinks.length===0?<div className="empty-state"><p>No link clicks yet</p></div>:(
+                  <div className="table-wrap">
+                    <table><thead><tr><th>Link</th><th>Clicks</th></tr></thead>
+                      <tbody>{socialLinks.map(({name,count})=>(
+                        <tr key={name}><td><span className="td-mono">{name}</span></td><td className="td-primary">{count}</td></tr>
+                      ))}</tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+              <div className="card">
+                <h3 style={{marginBottom:"12px"}}>Top Countries</h3>
                 <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr><th>Country</th><th>Events</th></tr>
-                    </thead>
+                  <table><thead><tr><th>Country</th><th>Events</th></tr></thead>
                     <tbody>
-                      {countries.map(({ country, count }) => (
-                        <tr key={country}>
-                          <td className="td-primary">{country}</td>
-                          <td>{count.toLocaleString()}</td>
-                        </tr>
-                      ))}
-                      {countries.length === 0 && (
-                        <tr><td colSpan={2} style={{ textAlign: "center", color: "var(--text-dim)", padding: "24px" }}>No data yet</td></tr>
-                      )}
+                      {countries.map(({country,count})=>(<tr key={country}><td className="td-primary">{country}</td><td>{count}</td></tr>))}
+                      {countries.length===0&&<tr><td colSpan={2} style={{textAlign:"center",color:"var(--text-dim)",padding:"24px"}}>No data</td></tr>}
                     </tbody>
                   </table>
                 </div>
+                {cities.length>0&&(
+                  <>
+                    <h3 style={{marginBottom:"8px",marginTop:"16px"}}>Top Cities</h3>
+                    <div className="table-wrap">
+                      <table><thead><tr><th>City</th><th>Events</th></tr></thead>
+                        <tbody>{cities.map(({city,count})=>(<tr key={city}><td className="td-primary">{city}</td><td>{count}</td></tr>))}</tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Hot sessions table */}
+            <div className="card">
+              <h3 style={{marginBottom:"12px"}}>🔥 Hot Sessions (Score ≥ 60)</h3>
+              <div className="table-wrap">
+                <table><thead><tr><th>Session</th><th>Score</th><th>Source</th><th>Campaign</th><th>Country</th><th>Last Seen</th></tr></thead>
+                  <tbody>
+                    {scores.filter(s=>s.score>=60).slice(0,10).map(s=>(
+                      <tr key={s.session_id}>
+                        <td><span className="td-mono">{s.session_id.slice(0,8)}…</span></td>
+                        <td><span style={{color:TEAL,fontWeight:700}}>{s.score}</span></td>
+                        <td>{s.utm_source??"—"}</td>
+                        <td>{s.utm_campaign??"—"}</td>
+                        <td>{s.country??"—"}</td>
+                        <td style={{fontSize:"11px",color:"var(--text-dim)"}}>{new Date(s.updated_at).toLocaleDateString()}</td>
+                      </tr>
+                    ))}
+                    {scores.filter(s=>s.score>=60).length===0&&(
+                      <tr><td colSpan={6} style={{textAlign:"center",color:"var(--text-dim)",padding:"24px"}}>No hot sessions yet — keep marketing!</td></tr>
+                    )}
+                  </tbody>
+                </table>
               </div>
             </div>
           </>
+        ) : tab==="leads" ? (
+          /* ── Leads Tab ── */
+          <div className="card">
+            <h3 style={{marginBottom:"12px"}}>Captured Leads ({leads.length})</h3>
+            <div className="table-wrap">
+              <table>
+                <thead><tr><th>Email</th><th>Name</th><th>Source</th><th>Campaign</th><th>Score</th><th>Country</th><th>Date</th></tr></thead>
+                <tbody>
+                  {leads.map(l=>(
+                    <tr key={l.id}>
+                      <td className="td-primary">{l.email}</td>
+                      <td>{l.name??"—"}</td>
+                      <td>{l.utm_source??"Direct"}</td>
+                      <td>{l.utm_campaign??"—"}</td>
+                      <td>{l.engagement_score!=null?<span style={{color:TEAL,fontWeight:700}}>{l.engagement_score}</span>:"—"}</td>
+                      <td>{l.country??"—"}</td>
+                      <td style={{fontSize:"11px",color:"var(--text-dim)"}}>{new Date(l.created_at).toLocaleDateString()}</td>
+                    </tr>
+                  ))}
+                  {leads.length===0&&(
+                    <tr><td colSpan={7} style={{textAlign:"center",color:"var(--text-dim)",padding:"40px"}}>No leads yet — the slide-in triggers after 3 minutes on the portfolio.</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ) : (
+          /* ── UTM Tab ── */
+          <div className="card">
+            <h3 style={{marginBottom:"12px"}}>UTM Campaign Performance</h3>
+            <div className="table-wrap">
+              <table>
+                <thead><tr><th>Source / Campaign</th><th>Sessions</th></tr></thead>
+                <tbody>
+                  {utmBreakdown.map(({campaign,count})=>(
+                    <tr key={campaign}><td><span className="td-mono">{campaign}</span></td><td className="td-primary">{count}</td></tr>
+                  ))}
+                  {utmBreakdown.length===0&&(
+                    <tr><td colSpan={2} style={{textAlign:"center",color:"var(--text-dim)",padding:"40px"}}>
+                      No UTM traffic yet. Share links like:<br/>
+                      <code style={{fontSize:"11px",color:"var(--teal)"}}>https://crewvia.in/?utm_source=linkedin&utm_medium=post&utm_campaign=may-launch</code>
+                    </td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
         )}
       </div>
     </>

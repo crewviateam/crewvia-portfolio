@@ -14,6 +14,12 @@ const NAV = [
     ],
   },
   {
+    section: "Visibility",
+    items: [
+      { to: "/sections",   icon: "👁️", label: "Sections"      },
+    ],
+  },
+  {
     section: "Content",
     items: [
       { to: "/projects",   icon: "🖼️",  label: "Projects"     },

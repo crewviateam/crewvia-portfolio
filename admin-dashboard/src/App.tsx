@@ -14,6 +14,7 @@ import ServicesPage  from "./pages/ServicesPage";
 import TeamPage      from "./pages/TeamPage";
 import ProcessPage   from "./pages/ProcessPage";
 import ContentPage   from "./pages/ContentPage";
+import SectionsPage  from "./pages/SectionsPage";
 
 export default function App() {
   const [authed,  setAuthed]  = useState(false);
@@ -49,12 +50,13 @@ export default function App() {
   return (
     <Routes>
       <Route element={<Layout />}>
-        <Route index         element={<AnalyticsPage />} />
-        <Route path="projects" element={<ProjectsPage />} />
-        <Route path="services" element={<ServicesPage />} />
-        <Route path="team"     element={<TeamPage />}     />
-        <Route path="process"  element={<ProcessPage />}  />
-        <Route path="content"  element={<ContentPage />}  />
+        <Route index           element={<AnalyticsPage />} />
+        <Route path="sections" element={<SectionsPage />}  />
+        <Route path="projects" element={<ProjectsPage />}  />
+        <Route path="services" element={<ServicesPage />}  />
+        <Route path="team"     element={<TeamPage />}      />
+        <Route path="process"  element={<ProcessPage />}   />
+        <Route path="content"  element={<ContentPage />}   />
         {/* Catch-all → dashboard */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
