@@ -43,10 +43,15 @@ export default function App() {
   useEffect(() => {
     initAnalytics();
 
+    // 1. Force scroll to top on reload
+    if ("scrollRestoration" in window.history) {
+      window.history.scrollRestoration = "manual";
+    }
+    window.scrollTo(0, 0);
+
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      smoothTouch: false,
     });
 
     lenis.on("scroll", ScrollTrigger.update);
@@ -55,7 +60,22 @@ export default function App() {
     gsap.ticker.add(tickerFnRef.current);
     gsap.ticker.lagSmoothing(0);
 
+    // 2. Global smooth scroll for anchor links
+    const handleAnchorClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const anchor = target.closest("a");
+      if (!anchor) return;
+      
+      const href = anchor.getAttribute("href");
+      if (href && href.startsWith("#") && href.length > 1) {
+        e.preventDefault();
+        lenis.scrollTo(href, { offset: 0 });
+      }
+    };
+    document.addEventListener("click", handleAnchorClick);
+
     return () => {
+      document.removeEventListener("click", handleAnchorClick);
       lenis.destroy();
       if (tickerFnRef.current) {
         gsap.ticker.remove(tickerFnRef.current);

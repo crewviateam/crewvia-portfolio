@@ -142,15 +142,17 @@ export default function SectionsPage() {
       label:         `Section "${capturedLabel}" ${next ? "shown" : "hidden"}`,
       previousValue: capturedCurrent,  // boolean before toggle
       currentValue:  next,             // boolean after toggle
-      undoFn: async () => {
-        await supabase.from("site_content").upsert(
-          { key: capturedKey, value: capturedCurrent ? "true" : "false",
-            description: `Controls visibility of the ${capturedLabel} section on the portfolio` },
-          { onConflict: "key" }
-        );
-        // Update optimistic local state
-        setVisibility(prev => ({ ...prev, [capturedKey]: capturedCurrent }));
-        await fetchVisibility();
+      undoRecipe: {
+        action:      "update",
+        table:       "site_content",
+        matchColumn: "key",
+        matchValue:  capturedKey,
+        originalData: {
+          key: capturedKey,
+          value: capturedCurrent ? "true" : "false",
+          description: `Controls visibility of the ${capturedLabel} section on the portfolio`,
+        },
+        useUpsert: true,
       },
     });
   }

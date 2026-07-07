@@ -1,19 +1,13 @@
 /**
- * src/hooks/useCrudTable.ts — v3
+ * src/hooks/useCrudTable.ts — v4
  *
  * Generic CRUD hook for any Supabase table.
  *
- * CHANGE v3: Passes rich MarkDirtyOptions to DeployContext:
- *   - changeKey:     stable "table::id" so editing the same row twice = 1 pending change
- *   - previousValue: captured before save for net-zero detection
- *   - currentValue:  the new row data
- *   - undoFn:        async closure that reverts to the original value in Supabase
- *
- * This means:
- *   - Editing a row twice → 1 entry in DeployBanner (last edit wins)
- *   - Editing a row then reverting → 0 entries, timer cancelled
- *   - Delete can be undone by re-inserting the original row
- *   - Insert can be undone by deleting the new row (using the returned id)
+ * CHANGE v4: Uses serializable UndoRecipe instead of closure-based undoFn.
+ *   This allows the deploy context to persist undo operations across page reloads.
+ *   - UPDATE → recipe with action="update", originalData=the row before edit
+ *   - INSERT → recipe with action="insert" (undo = delete the new row)
+ *   - DELETE → recipe with action="delete", originalData=the deleted row (undo = re-insert)
  */
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
@@ -83,11 +77,12 @@ export function useCrudTable<T extends { id: string }>(
           label,
           previousValue: originalRow,
           currentValue:  row,
-          undoFn: async () => {
-            if (originalRow) {
-              await supabase.from(table).update(originalRow).eq("id", capturedId);
-              await fetch();
-            }
+          undoRecipe: {
+            action:      "update",
+            table,
+            matchColumn: "id",
+            matchValue:  capturedId,
+            originalData: originalRow as Record<string, unknown> | null,
           },
         });
       }
@@ -111,9 +106,12 @@ export function useCrudTable<T extends { id: string }>(
           label:         `Added ${table.replace(/_/g, " ")} record`,
           previousValue: null,
           currentValue:  inserted,
-          undoFn: async () => {
-            await supabase.from(table).delete().eq("id", newId);
-            await fetch();
+          undoRecipe: {
+            action:      "insert",
+            table,
+            matchColumn: "id",
+            matchValue:  newId,
+            originalData: null,
           },
         });
       }
@@ -149,11 +147,12 @@ export function useCrudTable<T extends { id: string }>(
       label,
       previousValue: originalRow,
       currentValue:  null,
-      undoFn: async () => {
-        if (originalRow) {
-          await supabase.from(table).insert(originalRow);
-          await fetch();
-        }
+      undoRecipe: {
+        action:      "delete",
+        table,
+        matchColumn: "id",
+        matchValue:  id,
+        originalData: originalRow as Record<string, unknown> | null,
       },
     });
 

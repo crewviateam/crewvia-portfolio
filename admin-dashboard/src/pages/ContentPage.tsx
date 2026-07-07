@@ -111,13 +111,12 @@ export default function ContentPage() {
       label:         `Updated ${capturedKey}`,
       previousValue,
       currentValue:  newValue,
-      // undoFn: reverts the value back to what it was before this session's first edit
-      undoFn: async () => {
-        // NOTE: DeployContext passes the *original* value (before ANY changes this session)
-        // but we only have access to previousValue here. The context handles original tracking.
-        // We revert to previousValue — if undone multiple times, context's net-zero check handles it.
-        await supabase.from("site_content").update({ value: previousValue }).eq("key", capturedKey);
-        await fetchRows();
+      undoRecipe: {
+        action:      "update",
+        table:       "site_content",
+        matchColumn: "key",
+        matchValue:  capturedKey,
+        originalData: { value: previousValue },
       },
     });
 
