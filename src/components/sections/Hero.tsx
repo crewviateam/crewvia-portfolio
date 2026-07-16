@@ -6,7 +6,7 @@
  */
 import { useEffect, useRef } from "react";
 import { gsap } from "../../lib/gsap";
-import { trackSectionView } from "../../lib/analytics";
+import { trackCta, trackSectionView } from "../../lib/analytics";
 import MagneticButton from "../ui/MagneticButton";
 
 export default function Hero() {
@@ -107,16 +107,36 @@ export default function Hero() {
         {/* Top bar */}
         <div className="flex justify-between items-start hero-fade pt-20 md:pt-24">
           <div className="flex flex-col gap-2 md:gap-3">
-            {/* Kept minimal left anchor for balance if needed, or empty space */}
-            <div className="w-10"></div>
+            <div className="text-[10px] md:text-xs font-mono uppercase tracking-widest opacity-40 text-white">( Est. 2024 )</div>
+            <div className="hidden md:block text-xs font-mono uppercase tracking-wider opacity-60 max-w-[200px] text-white">
+              Creative Agency<br />
+              <span style={{ color: "#2ec4b6" }}>&amp; Digital Studio</span>
+            </div>
           </div>
 
           <div className="hidden md:flex text-right flex-col items-end gap-2 md:gap-3">
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono uppercase tracking-wider opacity-60 text-white">Taking on new projects</span>
-              <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#d4e157" }} aria-label="Currently accepting new projects" />
+              <div className="w-2 h-2 rounded-full animate-pulse" style={{ background: "#d4e157" }} />
             </div>
             <div className="text-xs font-mono uppercase tracking-wider opacity-60 text-white">Global · Remote</div>
+            <div className="flex gap-2 mt-2">
+              {([
+                { href: "https://www.linkedin.com/company/crew-via/",  label: "LI", track: "hero-linkedin"  },
+                { href: "https://www.instagram.com/crewvia.official/",         label: "IG", track: "hero-instagram" },
+              ] as const).map(({ href, label, track }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  data-track={track}
+                  className="w-8 h-8 border border-white/10 rounded-full flex items-center justify-center hover:bg-white hover:text-black transition-colors text-xs text-white"
+                >
+                  {label}
+                </a>
+              ))}
+            </div>
           </div>
         </div>
 
@@ -124,7 +144,7 @@ export default function Hero() {
         <div className="relative mb-8 md:mb-12">
           <h1
             ref={titleRef}
-            className="text-[clamp(3rem,14vw,12rem)] sm:text-[clamp(3rem,12vw,10rem)] md:text-[clamp(4rem,10vw,9rem)] leading-[0.95] font-heading font-black tracking-tight"
+            className="text-[14vw] sm:text-[12vw] md:text-[10vw] leading-[0.95] font-heading font-black tracking-tight"
             aria-label="CREWVIA"
           >
             <div className="flex flex-wrap overflow-hidden">
@@ -143,10 +163,21 @@ export default function Hero() {
 
           <div className="flex flex-col md:flex-row md:items-end justify-between mt-6 md:mt-10 border-t border-white/10 pt-4 md:pt-8 hero-fade gap-4 md:gap-6">
             <div className="flex-1 max-w-2xl">
-              <p className="text-sm sm:text-base md:text-lg lg:text-2xl font-serif-italic text-white/80 leading-snug mb-4 md:mb-6">
-                "Creative Freedom, United Crew — we build brand identities that scale, websites that convert, and robust engineering stacks."
+              <p className="text-sm sm:text-base md:text-xl lg:text-2xl font-serif-italic text-white/80 leading-snug mb-4 md:mb-6">
+                "Creative Freedom, United Crew — we craft bold brands, immersive experiences, and world-class campaigns."
               </p>
-              {/* Services grid removed for cleaner hero density */}
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 text-[10px] md:text-xs font-mono uppercase tracking-wider opacity-60 text-white">
+                {([
+                  { label: "Design",      sub: "Brand Identity Design" },
+                  { label: "Web",         sub: "Website Design"        },
+                  { label: "Engineering", sub: "Development"           },
+                ] as const).map(({ label, sub }) => (
+                  <div key={label}>
+                    <div className="text-white/40 mb-1">{label}</div>
+                    <div>{sub}</div>
+                  </div>
+                ))}
+              </div>
             </div>
             <div className="flex-shrink-0">
               <MagneticButton href="#work" id="hero-explore-work" text="Explore Work" cursorText="VIEW" ctaName="explore_work" />
