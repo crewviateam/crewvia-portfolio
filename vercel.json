@@ -1,6 +1,5 @@
 {
   "version": 2,
-  "cleanUrls": true,
   "framework": "vite",
   "headers": [
     {
@@ -56,7 +55,7 @@
     }
   ],
   "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/((?!api/.*).*)", "destination": "/index.html" }
   ],
   "functions": {
     "api/track.ts":    { "maxDuration": 5 },
