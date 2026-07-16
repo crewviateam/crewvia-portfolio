@@ -33,13 +33,13 @@ export default function Header() {
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.from(logoRef.current, {
-        y: -30, opacity: 0, duration: 1, ease: "power3.out", delay: 0.2,
+        y: -30, opacity: 0, duration: 1, ease: "power3.out", delay: 0.2, clearProps: "all"
       });
       gsap.from(".nav-pill", {
-        y: -30, opacity: 0, duration: 1, ease: "power3.out", delay: 0.3,
+        y: -30, opacity: 0, duration: 1, ease: "power3.out", delay: 0.3, clearProps: "all"
       });
       gsap.from(".header-cta", {
-        y: -30, opacity: 0, duration: 1, ease: "power3.out", delay: 0.4,
+        y: -30, opacity: 0, duration: 1, ease: "power3.out", delay: 0.4, clearProps: "all"
       });
     }, headerRef);
     return () => ctx.revert();
@@ -93,7 +93,7 @@ export default function Header() {
 
         {/* DESKTOP NAV PILL */}
         <nav
-          className={`nav-pill hidden md:flex items-center gap-8 bg-[#ffffff]/[0.03] hover:bg-[#ffffff]/[0.05] backdrop-blur-xl border border-white/10 px-8 py-3.5 rounded-full shadow-2xl transition-all duration-500 ${scrolled ? 'bg-[#ffffff]/[0.06] border-white/20' : ''}`}
+          className={`nav-pill hidden md:flex items-center gap-8 bg-[#ffffff]/[0.03] hover:bg-[#ffffff]/[0.05] backdrop-blur-xl border border-white/10 px-8 pt-[15px] pb-[13px] rounded-full shadow-2xl transition-all duration-500 ${scrolled ? 'bg-[#ffffff]/[0.06] border-white/20' : ''}`}
           aria-label="Primary navigation"
         >
           {NAV_LINKS.map((item) => (
@@ -101,11 +101,11 @@ export default function Header() {
               key={item.label}
               to={item.href.startsWith("#") ? `/${item.href}` : item.href}
               onClick={(e) => handleNavClick(e, item.href)}
-              className="text-[10px] lg:text-xs uppercase tracking-[0.25em] font-semibold text-white/50 hover:text-white transition-colors duration-300 relative group"
+              className="text-[10px] lg:text-xs leading-none uppercase tracking-[0.25em] font-semibold text-white/50 hover:text-white transition-colors duration-300 relative group"
             >
               {item.label}
               {/* Subtle hover dot indicator */}
-              <span className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1 h-1 bg-[#2ec4b6] rounded-full opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0" />
+              <span className="absolute -bottom-[10px] left-1/2 -translate-x-1/2 w-1 h-1 bg-[#2ec4b6] rounded-full opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0" />
             </Link>
           ))}
         </nav>
