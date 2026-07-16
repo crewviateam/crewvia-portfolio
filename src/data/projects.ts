@@ -10,6 +10,9 @@
  */
 import type { Project } from "../types";
 import generatedData from "./generated/projects.json";
+import { projectsFallback } from "./fallback/projects";
 
-export const projects: Project[] = generatedData as Project[];
+// We currently only want to show our 3 star-grade case studies and nothing else.
+// (Ignoring cmsProjects for now until the backend is fully updated with new non-dummy data)
+export const projects: Project[] = [...projectsFallback];
 

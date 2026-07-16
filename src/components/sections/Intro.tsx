@@ -1,7 +1,7 @@
 /**
  * src/components/sections/Intro.tsx
  */
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { gsap } from "../../lib/gsap";
 
 export default function Intro() {
@@ -14,15 +14,14 @@ export default function Intro() {
       lines.forEach((line) => {
         gsap.fromTo(
           line.querySelectorAll(".char"),
-          { y: 100, opacity: 0, rotateX: -90 },
+          { y: 60, opacity: 0, rotateX: -60 },
           {
             y: 0, opacity: 1, rotateX: 0,
-            stagger: 0.02, duration: 1, ease: "power4.out",
+            stagger: 0.015, duration: 0.6, ease: "power4.out",
             scrollTrigger: {
               trigger: line,
-              start: "top 80%",
-              end: "top 20%",
-              toggleActions: "play reverse play reverse",
+              start: "top 90%",
+              once: true,
             },
           }
         );
@@ -33,10 +32,10 @@ export default function Intro() {
   }, []);
 
   return (
-    <section ref={sectionRef} className="py-32 md:py-56 bg-[#050505] text-white overflow-hidden px-4">
+    <section ref={sectionRef} className="section-padding bg-[#050505] text-white overflow-hidden px-4 sm:px-6">
       <div className="container mx-auto">
 
-        <div className="flex flex-col text-[7vw] md:text-[6vw] leading-[1.1] font-heading uppercase font-bold tracking-tight">
+        <div className="flex flex-col text-[clamp(2rem,7vw,6rem)] md:text-[6vw] leading-[1.1] font-heading uppercase font-bold tracking-tight">
 
           <div className="intro-line-wrap overflow-hidden flex flex-wrap items-baseline gap-4">
             <span className="char">We</span>
@@ -59,11 +58,11 @@ export default function Intro() {
 
         <div className="mt-32 w-full flex justify-end">
           <div
-            className="w-full md:w-1/3 text-lg md:text-xl font-light text-white/60 font-mono leading-relaxed pl-8"
+            className="w-full md:w-2/5 text-base md:text-xl font-light text-white/60 font-mono leading-relaxed pl-6 md:pl-8"
             style={{ borderLeft: "2px solid #2ec4b6" }}
           >
             <p>
-              In the age of templates, <span className="text-white italic font-serif">creative freedom is currency</span>. We strip away the non-essential to reveal the raw, beating heart of your brand — and unite a crew to bring it to life.
+              Founded in October 2025 and driven by three core founders, <span className="text-white italic font-serif">creative freedom is our currency</span>. We strip away the non-essential to reveal the raw, beating heart of your brand — and unite a crew to bring it to life.
             </p>
           </div>
         </div>

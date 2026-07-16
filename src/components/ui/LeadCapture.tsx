@@ -13,13 +13,13 @@
  * Never shown again after successful submission or dismissal.
  */
 import { useEffect, useRef, useState } from "react";
+import { submitLeadCapture } from "../../lib/api";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const LEAD_DISMISS_KEY  = "crewvia_lead_dismissed";
 const TRIGGER_TIME_MS   = 3 * 60 * 1000;   // 3 minutes
 const MIN_SCORE_TRIGGER = 40;               // minimum engagement score to show early
-const ENDPOINT          = "/api/lead";
 
 // ─── Helpers: read analytics session/visitor from storage ─────────────────────
 
@@ -106,38 +106,21 @@ export default function LeadCapture() {
     setSending(true);
     setError("");
 
-    try {
-      const payload = {
-        email:     email.trim().toLowerCase(),
-        name:      name.trim() || undefined,
-        session_id: getStorageItem("crewvia_sid") ?? "",
-        visitor_id: getStorageItem("crewvia_vid") ?? undefined,
-        page_url:  window.location.href,
-        ...getUTM(),
-      };
+    const res = await submitLeadCapture({
+      name: name.trim() || undefined,
+      email: email.trim().toLowerCase(),
+    });
 
-      const res = await fetch(ENDPOINT, {
-        method:  "POST",
-        headers: { "Content-Type": "application/json" },
-        body:    JSON.stringify(payload),
-      });
-
-      if (!res.ok) {
-        const { error: apiError } = await res.json().catch(() => ({ error: "Something went wrong" })) as { error?: string };
-        setError(apiError ?? "Something went wrong — please try again");
-        setSending(false);
-        return;
-      }
-
-      setSubmitted(true);
-      markDismissed();
-      // Auto-close after 3 seconds
-      setTimeout(() => setVisible(false), 3000);
-
-    } catch {
-      setError("Network error — please try again");
+    if (!res.success) {
+      setError(res.error ?? "Something went wrong — please try again");
       setSending(false);
+      return;
     }
+
+    setSubmitted(true);
+    markDismissed();
+    // Auto-close after 3 seconds
+    setTimeout(() => setVisible(false), 3000);
   }
 
   if (!visible) return null;

@@ -2,15 +2,14 @@
  * src/components/sections/Marquee.tsx
  */
 import React, { useEffect, useRef } from "react";
-import { gsap } from "../../lib/gsap";
+import { gsap, ScrollTrigger } from "../../lib/gsap";
 
 const items = [
-  { text: "Branding",   outline: true  },
-  { text: "Direction",  outline: false },
-  { text: "Film",       outline: true  },
-  { text: "Web",        outline: false },
-  { text: "Marketing",  outline: true  },
-  { text: "Identity",   outline: false },
+  { text: "Brand Identity",         outline: true  },
+  { text: "Website Design",         outline: false },
+  { text: "Full-Stack Dev",         outline: true  },
+  { text: "Strategy & Positioning", outline: false },
+  { text: "UI/UX Design",           outline: true  },
 ];
 
 export default function Marquee() {
@@ -18,11 +17,22 @@ export default function Marquee() {
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      gsap.to(".marquee-inner", {
+      const marqueeAnim = gsap.to(".marquee-inner", {
         xPercent: -50,
         repeat: -1,
         duration: 22,
         ease: "linear",
+        paused: true
+      });
+
+      ScrollTrigger.create({
+        trigger: marqueeRef.current,
+        start: "top bottom",
+        end: "bottom top",
+        onEnter: () => marqueeAnim.play(),
+        onLeave: () => marqueeAnim.pause(),
+        onEnterBack: () => marqueeAnim.play(),
+        onLeaveBack: () => marqueeAnim.pause(),
       });
     }, marqueeRef);
 

@@ -11,14 +11,14 @@ export default function Team() {
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap.from(".team-card", {
-        y: 100,
+        y: 40,
         opacity: 0,
-        stagger: 0.2,
-        duration: 1,
+        duration: 0.6,
+        stagger: 0.15,
         ease: "power3.out",
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: "top 10%",
+          start: "top 85%",
           once: true,
         },
       });
@@ -27,25 +27,31 @@ export default function Team() {
   }, []);
 
   return (
-    <section ref={sectionRef} id="team" className="section-padding bg-[var(--bg-color)] text-[var(--text-color)]">
-      <div className="container">
-        <div className="mb-24 text-center">
-          <span
-            className="text-xs font-mono uppercase tracking-widest px-4 py-2 rounded-full"
-            style={{ border: "1px solid rgba(46,196,182,0.3)", color: "#2ec4b6" }}
-          >
-            The Crew
-          </span>
-          <h2 className="mt-8 text-5xl md:text-7xl">
-            United<br />
-            <span className="stroke-text">Minds</span>
+    <section ref={sectionRef} id="team" className="section-padding bg-[var(--bg-color)] text-[var(--text-color)] relative overflow-hidden">
+      
+      {/* Background Ambient Glowing Orbs */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none mix-blend-screen opacity-20 z-0">
+        <div className="ambient-orb ambient-orb-lime absolute bottom-[10%] right-[10%] w-[50vw] h-[50vw] max-w-[500px] max-h-[500px]"></div>
+      </div>
+
+      <div className="container relative z-10">
+        {/* Standardized Section Header */}
+        <div className="section-header team-card">
+          <h2 className="section-title">
+            THE<br /><span className="stroke-text">TEAM</span>
           </h2>
+          <div className="section-meta">
+            <span className="section-label">Leadership</span>
+            <p className="section-desc">
+              Misfits, mavericks, and makers. We operate as a tight-knit collective of specialists, united by a singular obsession with craft.
+            </p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
           {team.map((member, i) => (
-            <div key={member.id} className="team-card group cursor-pointer">
-              <div className="relative overflow-hidden aspect-[3/4] mb-6 rounded-sm">
+            <div key={member.id} className="team-card glass-card-sm group cursor-pointer">
+              <div className="relative overflow-hidden aspect-[3/4] mb-6 rounded-xl">
                 <img
                   src={member.image}
                   alt={member.name}

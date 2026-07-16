@@ -125,6 +125,11 @@ function flush(): void {
   queue = [];
   if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
 
+  // Prevent 404 errors during local development without Vercel backend
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return;
+  }
+
   try {
     fetch(ENDPOINT, {
       method:    "POST",
@@ -266,7 +271,9 @@ function initTimeTracking(): void {
     });
 
     if (navigator.sendBeacon) {
-      navigator.sendBeacon(ENDPOINT, new Blob([payload], { type: "application/json" }));
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        navigator.sendBeacon(ENDPOINT, new Blob([payload], { type: "application/json" }));
+      }
     }
   }
 

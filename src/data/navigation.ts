@@ -23,4 +23,4 @@ export const NAV_LINKS: NavLink[] = [
   return true;
 });
 
-export const CONTACT_LINK: NavLink = { href: "#contact", label: "Start Project" };
+export const CONTACT_LINK: NavLink = { href: "/contact", label: "Start Project" };

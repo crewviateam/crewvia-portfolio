@@ -5,7 +5,7 @@
  * To update content: edit via the CMS admin → Vercel auto-redeploys.
  */
 import type { Service } from "../types";
-import generatedData from "./generated/services.json";
+import { servicesFallback } from "./fallback/services";
 
-export const services: Service[] = generatedData as Service[];
+export const services: Service[] = servicesFallback;
 

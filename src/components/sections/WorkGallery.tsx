@@ -1,10 +1,11 @@
 /**
  * src/components/sections/WorkGallery.tsx
  */
-import React, { useEffect, useRef } from "react";
+import  { useEffect, useRef } from "react";
 import { projects } from "../../data/projects";
 import { gsap, ScrollTrigger } from "../../lib/gsap";
 import { trackEvent, trackSectionView } from "../../lib/analytics";
+import { Link } from "react-router-dom";
 
 export default function WorkGallery() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -28,16 +29,16 @@ export default function WorkGallery() {
       });
 
       headingTl
-        .to("#headingLabel", { opacity: 1, y: 0, duration: 0.7, ease: "power3.out" })
+        .to("#headingLabel", { opacity: 1, y: 0, duration: 0.4, ease: "power3.out" })
         .to(
           "#headingSection .line span",
           {
             y: "0%",
-            duration: 1.1,
-            stagger: 0.15,
+            duration: 0.7,
+            stagger: 0.1,
             ease: "expo.out",
           },
-          "-=0.3"
+          "-=0.2"
         );
 
       /* ─── MASTER SCRUB TIMELINE FOR WORKS ─── */
@@ -82,8 +83,7 @@ export default function WorkGallery() {
       const vids = gsap.utils.toArray<HTMLElement>(".work-video-wrap");
 
       if (contentLayers[0]) {
-        tl.to(contentLayers[0], { opacity: 1, y: 0, duration: 1, ease: "power1.out" }, "shift");
-        contentLayers[0].classList.add("pointer-events-auto");
+        tl.to(contentLayers[0], { autoAlpha: 1, y: 0, duration: 1, ease: "power1.out" }, "shift");
       }
       if (dots[0]) {
         tl.to(dots[0], { width: 44, backgroundColor: "#2ec4b6", duration: 1, ease: "power1.out" }, "shift");
@@ -98,15 +98,10 @@ export default function WorkGallery() {
         tl.to(vids[i], { clipPath: "inset(0% 0 0% 0)", duration: 1, ease: "power1.inOut" }, wipeLabel);
         
         // Outgoing Content: Fade out and move up
-        tl.to(contentLayers[i - 1], { opacity: 0, y: -30, duration: 0.5, ease: "power1.in" }, wipeLabel);
+        tl.to(contentLayers[i - 1], { autoAlpha: 0, y: -30, duration: 0.5, ease: "power1.in" }, wipeLabel);
         // Incoming Content: Move from 30px down to 0 and fade in (starts halfway through the wipe)
-        tl.fromTo(contentLayers[i], { opacity: 0, y: 30 }, { opacity: 1, y: 0, duration: 0.5, ease: "power1.out" }, `${wipeLabel}+=0.5`);
+        tl.fromTo(contentLayers[i], { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.5, ease: "power1.out" }, `${wipeLabel}+=0.5`);
         
-        // Manage pointer events sequentially
-        tl.call(() => {
-          contentLayers.forEach(el => el.classList.remove("pointer-events-auto"));
-          contentLayers[i].classList.add("pointer-events-auto");
-        }, undefined, `${wipeLabel}+=0.5`);
 
         // Dot transition
         tl.to(dots[i - 1], { width: 28, backgroundColor: "rgba(255,255,255,0.2)", duration: 1, ease: "power1.inOut" }, wipeLabel);
@@ -153,10 +148,10 @@ export default function WorkGallery() {
       `}</style>
 
       {/* HEADING SECTION */}
-      <div id="headingSection" className="h-[90vh] flex items-center justify-center relative overflow-hidden">
+      <div id="headingSection" className="section-padding flex items-center justify-center relative overflow-hidden">
         <div className="heading-wrap text-center relative z-[2]">
-          <p id="headingLabel" className="text-xs md:text-sm tracking-[0.35em] uppercase text-[#2ec4b6] mb-6 opacity-0 translate-y-5 font-bold">
-            Portfolio — 2024
+          <p id="headingLabel" className="text-[10px] sm:text-xs md:text-sm tracking-[0.35em] uppercase text-[#2ec4b6] mb-6 opacity-0 translate-y-5 font-bold">
+            Portfolio — 2024 – 2026
           </p>
           <h2 className="text-[clamp(4rem,11vw,10rem)] font-black leading-[0.9] tracking-tight">
             <span className="line"><span>Selected</span></span>
@@ -186,7 +181,7 @@ export default function WorkGallery() {
                     src={project.image}
                     alt={project.title}
                     loading={i === 0 ? "eager" : "lazy"}
-                    className="w-full h-full object-cover block"
+                    className="w-full h-full object-cover object-top block"
                   />
                 </div>
               ))}
@@ -196,13 +191,13 @@ export default function WorkGallery() {
           {/* CONTENT PANEL */}
           <div
             ref={contentPanelRef}
-            className="absolute left-[7.5vw] md:left-auto md:right-[5vw] bottom-[10vh] md:bottom-auto md:top-1/2 md:-translate-y-1/2 w-[85vw] md:w-[26vw] min-w-[240px] opacity-0 z-20"
+            className="absolute left-[5vw] sm:left-[7.5vw] md:left-auto md:right-[5vw] bottom-[8vh] sm:bottom-[10vh] md:bottom-auto md:top-1/2 md:-translate-y-1/2 w-[90vw] sm:w-[85vw] md:w-[26vw] min-w-[240px] opacity-0 z-20"
           >
             <div className="relative w-full h-full">
               {projects.map((project, i) => (
                 <div
                   key={project.id}
-                  className="work-content-layer flex flex-col justify-end md:justify-center h-full"
+                  className="work-content-layer absolute inset-0 flex flex-col justify-end md:justify-center h-full invisible opacity-0"
                 >
                   <p className="text-[10px] tracking-[0.3em] text-[#2ec4b6] uppercase mb-4 font-bold drop-shadow-md">
                     0{i + 1} / 0{projects.length}
@@ -210,9 +205,9 @@ export default function WorkGallery() {
                   <h3 className="text-[clamp(1.5rem,6vw,2.6rem)] font-black leading-[1.05] tracking-tight mb-3 md:mb-5 text-white drop-shadow-md">
                     {project.title}
                   </h3>
-                  {/* Using category/year as desc or blank if none */}
+                  {/* Use specific project description if available */}
                   <p className="text-xs md:text-sm leading-[1.6] md:leading-[1.75] text-white/80 mb-4 md:mb-8 drop-shadow-md">
-                    An immersive {project.category.toLowerCase()} experience created in {project.year}. Designed with meticulous attention to detail and interaction.
+                    {project.description || `An immersive ${project.category.toLowerCase()} experience created in ${project.year}.`}
                   </p>
                   
                   {project.tags && project.tags.length > 0 && (
@@ -228,15 +223,16 @@ export default function WorkGallery() {
                     </div>
                   )}
 
-                  <button
-                    onClick={() => trackEvent("project_hover", { project_id: project.id, project_title: project.title })}
-                    className="inline-flex items-center gap-2.5 text-xs font-bold tracking-[0.12em] uppercase text-[#2ec4b6] group transition-all drop-shadow-md w-fit"
+                  <Link
+                    to={`/work/${project.id}`}
+                    onClick={() => trackEvent("project_click", { project_id: project.id, project_title: project.title })}
+                    className="inline-flex items-center gap-2.5 text-xs font-bold tracking-[0.12em] uppercase text-[#2ec4b6] group transition-all drop-shadow-md w-fit pointer-events-auto"
                   >
                     View Case Study
                     <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-4 h-4 transition-transform group-hover:translate-x-1">
                       <path d="M3 8h10M9 4l4 4-4 4" />
                     </svg>
-                  </button>
+                  </Link>
                 </div>
               ))}
             </div>

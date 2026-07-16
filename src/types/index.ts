@@ -14,6 +14,14 @@ export interface Project {
   tags:     string[];
   image:    string;
   color:    string;
+  description?: string;
+  
+  // Dynamic Case Study Storytelling Fields
+  problemStatement?: string;
+  problemParagraphs?: string[];
+  frictionPoints?: string[];
+  solutionStatement?: string;
+  solutionParagraphs?: string[];
 }
 
 export interface Service {

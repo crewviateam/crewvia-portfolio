@@ -4,7 +4,7 @@
  * SVG logo-matched cursor. Only initialises on pointer-fine devices.
  * GSAP quickTo handles smooth 60fps tracking with minimal overhead.
  */
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { gsap } from "../../lib/gsap";
 
 export default function CustomCursor() {
@@ -35,30 +35,72 @@ export default function CustomCursor() {
       yToRing(e.clientY);
     };
 
-    const onHoverStart = () => {
-      gsap.to(cursor, { scale: 1.25, duration: 0.25, ease: "power2.out" });
-      gsap.to(ring,   { scale: 1, opacity: 1, duration: 0.25, ease: "power2.out" });
+    const onHoverStart = (target?: Element) => {
+      const text = target?.getAttribute("data-cursor-text") || "";
+      if (ring) ring.innerText = text;
+
+      if (text) {
+        gsap.to(cursor, { scale: 0, opacity: 0, duration: 0.25, ease: "power2.out" });
+        gsap.to(ring, {
+          scale: 1, opacity: 1, 
+          width: 72, height: 32, borderRadius: 16,
+          background: "#d4e157", borderColor: "transparent",
+          duration: 0.3, ease: "back.out(1.5)" 
+        });
+      } else {
+        gsap.to(cursor, { scale: 1.25, opacity: 1, duration: 0.25, ease: "power2.out" });
+        gsap.to(ring,   { 
+          scale: 1, opacity: 1, 
+          background: "transparent", borderColor: "rgba(46, 196, 182, 0.5)", 
+          width: 48, height: 48, borderRadius: "50%", 
+          duration: 0.25, ease: "power2.out" 
+        });
+      }
     };
 
     const onHoverEnd = () => {
-      gsap.to(cursor, { scale: 1,    duration: 0.25, ease: "power2.out" });
-      gsap.to(ring,   { scale: 0, opacity: 0, duration: 0.2,  ease: "power2.in"  });
+      if (ring) ring.innerText = "";
+      gsap.to(cursor, { scale: 1, opacity: 1, duration: 0.25, ease: "power2.out" });
+      gsap.to(ring,   { 
+        scale: 0, opacity: 0, 
+        width: 48, height: 48, borderRadius: "50%", 
+        background: "transparent", borderColor: "rgba(46, 196, 182, 0.5)", 
+        duration: 0.2, ease: "power2.in"  
+      });
     };
 
     window.addEventListener("mousemove", onMouseMove, { passive: true });
 
-    const clickables = document.querySelectorAll("a, button, .cursor-pointer");
-    clickables.forEach((el) => {
-      el.addEventListener("mouseenter", onHoverStart);
-      el.addEventListener("mouseleave", onHoverEnd);
-    });
+    let hoveredEl: Element | null = null;
+
+    const onMouseOver = (e: MouseEvent) => {
+      const target = e.target as Element;
+      const interactiveEl = target.closest("a, button, .cursor-pointer");
+      
+      if (interactiveEl && interactiveEl !== hoveredEl) {
+        hoveredEl = interactiveEl;
+        onHoverStart(interactiveEl);
+      }
+    };
+
+    const onMouseOut = (e: MouseEvent) => {
+      const related = e.relatedTarget as Element | null;
+      
+      // If we had a hovered element, and the cursor just moved to an element
+      // OUTSIDE of it (or left the window completely), trigger hover end.
+      if (hoveredEl && !hoveredEl.contains(related)) {
+        hoveredEl = null;
+        onHoverEnd();
+      }
+    };
+
+    document.addEventListener("mouseover", onMouseOver, { passive: true });
+    document.addEventListener("mouseout", onMouseOut, { passive: true });
 
     return () => {
       window.removeEventListener("mousemove", onMouseMove);
-      clickables.forEach((el) => {
-        el.removeEventListener("mouseenter", onHoverStart);
-        el.removeEventListener("mouseleave", onHoverEnd);
-      });
+      document.removeEventListener("mouseover", onMouseOver);
+      document.removeEventListener("mouseout", onMouseOut);
     };
   }, []);
 
@@ -69,8 +111,8 @@ export default function CustomCursor() {
           version="1.2"
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 158 162"
-          width="40"
-          height="42"
+          width="38"
+          height="40"
           style={{ transform: "scaleX(-1)" }}
         >
           <defs>

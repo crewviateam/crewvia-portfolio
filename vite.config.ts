@@ -18,9 +18,9 @@ export default defineConfig(({ mode }) => {
       host: true,
       strictPort: false,
       allowedHosts: true,
-      hmr: {
+      hmr: process.env.CODESPACES ? {
         clientPort: 443,
-      },
+      } : undefined,
     },
 
     // ─── Plugins ───────────────────────────────────────────────────────────────
@@ -82,6 +82,7 @@ export default defineConfig(({ mode }) => {
       },
 
       chunkSizeWarningLimit: 500,
+      reportCompressedSize: false,
     },
 
     // ─── CSS ───────────────────────────────────────────────────────────────────

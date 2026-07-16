@@ -124,6 +124,27 @@ export interface Database {
         };
         Update: Partial<Database["public"]["Tables"]["analytics_events"]["Insert"]>;
       };
+
+      inquiries: {
+        Row: {
+          id: string;
+          type: "contact" | "lead";
+          name: string | null;
+          email: string;
+          project_type: string | null;
+          budget: string | null;
+          message: string | null;
+          session_id: string | null;
+          status: string;
+          created_at: string;
+        };
+        Insert: Omit<Database["public"]["Tables"]["inquiries"]["Row"], "id" | "created_at" | "status"> & {
+          id?: string;
+          status?: string;
+          created_at?: string;
+        };
+        Update: Partial<Database["public"]["Tables"]["inquiries"]["Insert"]>;
+      };
     };
   };
 }

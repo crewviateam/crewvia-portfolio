@@ -1,134 +1,160 @@
-/**
- * src/components/sections/Services.tsx
- */
-import React, { useEffect, useRef } from "react";
-import { gsap } from "../../lib/gsap";
-import { ArrowUpRight } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { gsap, ScrollTrigger } from "../../lib/gsap";
 import { services } from "../../data/services";
+import MagneticButton from "../ui/MagneticButton";
 
 export default function Services() {
   const sectionRef = useRef<HTMLElement>(null);
-  const listRef    = useRef<HTMLUListElement>(null);
-  const revealRef  = useRef<HTMLDivElement>(null);
-  const imgRefs    = useRef<(HTMLImageElement | null)[]>([]);
-  const activeIdx  = useRef<number>(-1);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [displayIndex, setDisplayIndex] = useState(0);
 
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      gsap.set(revealRef.current, { xPercent: -50, yPercent: -50, scale: 0, opacity: 0 });
-      gsap.set(imgRefs.current[0], { opacity: 1 });
-      activeIdx.current = 0;
+    if (activeIndex !== displayIndex) {
+      let isCancelled = false;
+      
+      gsap.killTweensOf(contentRef.current);
+      gsap.to(contentRef.current, {
+        y: -15, 
+        opacity: 0, 
+        duration: 0.15, // Faster exit
+        ease: "power2.inOut",
+        onComplete: () => {
+          if (!isCancelled) {
+            setDisplayIndex(activeIndex);
+            gsap.fromTo(contentRef.current, 
+              { y: 15, opacity: 0 }, 
+              { y: 0, opacity: 1, duration: 0.3, ease: "power2.out", clearProps: "transform" }
+            );
+          }
+        }
+      });
+      
+      return () => {
+        isCancelled = true;
+      };
+    }
+  }, [activeIndex, displayIndex]);
 
-      // Scroll reveal for list items
-      const items = listRef.current?.children;
-      if (items) {
-        Array.from(items).forEach((item) => {
-          gsap.fromTo(
-            item,
-            { y: 50, opacity: 0 },
-            { y: 0, opacity: 1, duration: 0.8, scrollTrigger: { trigger: item, start: "top 95%" } }
-          );
-        });
-      }
-
-      // Pre-compiled mouse tracker
-      const xTo = gsap.quickTo(revealRef.current, "x", { duration: 0.5, ease: "power2.out" });
-      const yTo = gsap.quickTo(revealRef.current, "y", { duration: 0.5, ease: "power2.out" });
-
-      const moveReveal = (e: MouseEvent) => { xTo(e.clientX); yTo(e.clientY); };
-      window.addEventListener("mousemove", moveReveal, { passive: true });
-      return () => window.removeEventListener("mousemove", moveReveal);
+  useEffect(() => {
+    if (!sectionRef.current || !containerRef.current) return;
+    
+    const isMobile = window.innerWidth < 1024;
+    let ctx = gsap.context(() => {
+      if (isMobile) return;
+      
+      ScrollTrigger.create({
+        id: "services-pin",
+        trigger: sectionRef.current,
+        start: "top top",
+        end: "+=2000",
+        pin: true,
+        scrub: true,
+        onUpdate: (self) => {
+          const progress = self.progress;
+          let newIndex = 0;
+          if (progress > 0.33 && progress <= 0.66) newIndex = 1;
+          if (progress > 0.66) newIndex = 2;
+          
+          setActiveIndex((prev) => {
+            if (prev !== newIndex) return newIndex;
+            return prev;
+          });
+        }
+      });
     }, sectionRef);
 
     return () => ctx.revert();
   }, []);
 
-  const handleMouseEnter = (idx: number) => {
-    if (activeIdx.current !== idx) {
-      gsap.to(imgRefs.current[activeIdx.current], { opacity: 0, duration: 0.25 });
-      gsap.to(imgRefs.current[idx],               { opacity: 1, duration: 0.25 });
-      activeIdx.current = idx;
+  const handleTabClick = (idx: number) => {
+    setActiveIndex(idx);
+    
+    const isMobile = window.innerWidth < 1024;
+    if (!isMobile) {
+      const st = ScrollTrigger.getById("services-pin");
+      if (st) {
+        let targetProgress = 0;
+        if (idx === 0) targetProgress = 0.16;
+        if (idx === 1) targetProgress = 0.5;
+        if (idx === 2) targetProgress = 0.83;
+        
+        const targetScroll = st.start + (st.end - st.start) * targetProgress;
+        window.scrollTo({ top: targetScroll, behavior: "smooth" });
+      }
     }
-    if (revealRef.current) revealRef.current.style.willChange = "transform";
-    gsap.to(revealRef.current, { scale: 1, opacity: 1, duration: 0.3 });
   };
 
-  const handleMouseLeave = () => {
-    gsap.to(revealRef.current, {
-      scale: 0, opacity: 0, duration: 0.3,
-      onComplete: () => { if (revealRef.current) revealRef.current.style.willChange = "auto"; },
-    });
-  };
+  const activeService = services[displayIndex];
 
   return (
-    <section ref={sectionRef} id="services" className="section-padding bg-[#050505] text-white relative z-10 overflow-hidden">
+    <section ref={sectionRef} id="services" className="relative w-full bg-[#050505] text-white">
+      {/* Pinned Container */}
+      <div ref={containerRef} className="min-h-screen flex items-center justify-center section-padding">
+        <div className="container relative z-10 w-full h-full max-w-[1600px] flex flex-col lg:flex-row gap-12 lg:gap-24">
+          
+          {/* LEFT COLUMN: Tabs */}
+          <div className="w-full lg:w-5/12 flex flex-col justify-center">
+            <div className="mb-12 lg:mb-24">
+              <h2 className="text-[clamp(3rem,6vw,5.5rem)] font-heading font-black uppercase leading-[0.85] tracking-tight">
+                OUR<br /><span className="stroke-text">SERVICES</span>
+              </h2>
+            </div>
 
-      {/* Hover reveal image panel */}
-      <div
-        ref={revealRef}
-        className="fixed top-0 left-0 w-[300px] h-[400px] pointer-events-none z-50 hidden md:block rounded-sm overflow-hidden shadow-2xl"
-      >
-        {services.map((s, i) => (
-          <img
-            key={s.id}
-            ref={(el) => { imgRefs.current[i] = el; }}
-            src={s.image}
-            alt={s.title}
-            width={300}
-            height={400}
-            loading="lazy"
-            decoding="async"
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{ opacity: 0 }}
-          />
-        ))}
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{ background: "linear-gradient(135deg, rgba(46,196,182,0.4), rgba(212,225,87,0.2))" }}
-        />
-      </div>
+            <div className="flex flex-col gap-2">
+              {services.map((service, idx) => {
+                const isActive = activeIndex === idx;
+                return (
+                  <button
+                    key={service.id}
+                    onClick={() => handleTabClick(idx)}
+                    className="group text-left py-4 sm:py-6 border-b border-white/10 transition-colors duration-300 relative overflow-hidden"
+                  >
+                    <div className="relative z-10 flex items-center gap-4 sm:gap-6">
+                      <div className={`w-3 h-3 flex-shrink-0 transition-colors duration-300 ${isActive ? 'bg-[#d4e157]' : 'bg-white/10 group-hover:bg-[#2ec4b6]/50'}`} />
+                      <span className={`text-xl sm:text-2xl md:text-3xl font-bold uppercase transition-colors duration-300 ${isActive ? 'text-white' : 'text-white/40 group-hover:text-white/70'}`}>
+                        {service.title}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+            
+            <div className="mt-16 hidden lg:flex justify-start">
+              <MagneticButton href="/contact" text="Let's Talk" cursorText="START" />
+            </div>
+          </div>
 
-      <div className="container relative z-10">
-        <div className="flex flex-col md:flex-row justify-between items-start mb-20">
-          <h2 className="text-6xl md:text-8xl font-bold mb-8 md:mb-0">
-            Our<br /><span className="stroke-text">Expertise</span>
-          </h2>
-          <p className="max-w-xs text-sm uppercase tracking-wide text-white/40 pt-4 font-mono">
-            Comprehensive creative solutions for forward-thinking brands — from strategy to screen.
-          </p>
-        </div>
-
-        <ul ref={listRef} className="border-t border-white/10">
-          {services.map((service, idx) => (
-            <li
-              key={service.id}
-              className="group border-b border-white/10 relative overflow-hidden cursor-pointer"
-              onMouseEnter={() => handleMouseEnter(idx)}
-              onMouseLeave={handleMouseLeave}
-            >
-              <div
-                className="absolute inset-0 scale-x-0 group-hover:scale-x-100 origin-left transition-transform duration-500 ease-out"
-                style={{ background: "linear-gradient(90deg, rgba(46,196,182,0.1), rgba(212,225,87,0.05))" }}
-              />
-              <div className="relative z-10 flex justify-between items-center py-12 px-4 group-hover:px-8 transition-all duration-500">
-                <div className="flex items-baseline gap-8">
-                  <span className="text-xs font-mono text-white/20 group-hover:text-[#2ec4b6] transition-colors">
-                    {service.number}
-                  </span>
-                  <h3 className="text-2xl sm:text-3xl md:text-5xl group-hover:text-white transition-colors group-hover:translate-x-2 sm:group-hover:translate-x-4 duration-500">
-                    {service.title}
+          {/* RIGHT COLUMN: Content */}
+          <div className="w-full lg:w-7/12 flex flex-col justify-center relative min-h-[600px]">
+            <div className="glass-card w-full h-full flex flex-col justify-center transition-colors duration-1000 border-white/10">
+                <div ref={contentRef} className="w-full flex flex-col">
+                  <h3 className="text-3xl sm:text-4xl md:text-5xl font-black mb-6 uppercase tracking-tight text-white">
+                    {activeService.title}
                   </h3>
+                  <p className="text-base sm:text-lg text-white/70 font-medium leading-relaxed max-w-2xl mb-12">
+                    {activeService.description}
+                  </p>
+                  
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8 border-t border-white/10 pt-8">
+                    {activeService.items.map((item, i) => (
+                      <div key={i} className="flex items-center gap-3">
+                        <div className="w-1.5 h-1.5 rounded-full bg-[#2ec4b6]/50" />
+                        <span className="text-sm font-semibold uppercase tracking-wider text-white/80">{item}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <span className="text-xs uppercase tracking-widest opacity-0 md:opacity-100 group-hover:text-[#d4e157] transition-all transform translate-y-4 group-hover:translate-y-0 duration-500 delay-75 font-bold">
-                    {service.category}
-                  </span>
-                  <ArrowUpRight className="w-8 h-8 text-white/20 group-hover:text-[#d4e157] group-hover:rotate-45 transition-all duration-500" />
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+            </div>
+          </div>
+          
+          <div className="mt-12 flex lg:hidden justify-center w-full">
+            <MagneticButton href="/contact" text="Let's Talk" cursorText="START" />
+          </div>
+
+        </div>
       </div>
     </section>
   );

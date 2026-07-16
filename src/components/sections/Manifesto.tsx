@@ -5,7 +5,7 @@
  * totalScrollPx = (statements.length + 1.5) × vhPerStatement to hold
  * "Your vision. Our crew." on screen before releasing the pin.
  */
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { gsap, ScrollTrigger } from "../../lib/gsap";
 
 const statements = [
